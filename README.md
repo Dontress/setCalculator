@@ -3,11 +3,13 @@ To znamená že budeme mít jenom jeden pointer na pointer ve kterém budou ulo�
 
 universum:
 U Apple Lemon Orange Banana Peach
+
 v kodu:
 {  Apple, Lemon, Orange, Banana, Peach } 
 
 
 ostatní množiny: 
 S Apple Banana Peach
+
 v kodu:
 { 0, 3, 4 }
