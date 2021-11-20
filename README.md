@@ -4,8 +4,8 @@ To znamená že budeme mít jenom jeden pointer na pointer ve kterém budou ulo�
 universum:
 U Apple Lemon Orange Banana Peach
 v kodu:
-{  Apple, Lemon, Orange, Banana, Peach } \n
-     0      1       2       3      4
+{  Apple, Lemon, Orange, Banana, Peach } 
+
 
 ostatní množiny: 
 S Apple Banana Peach
