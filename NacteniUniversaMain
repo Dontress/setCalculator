@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define MAXLEN 1024
+#define ITEMLEN 30
+
+// gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
+// ./setcal FILE
+
+typedef struct{
+    char *items;
+    int cardinality;
+}set_t;
+
+void read_line(char *line, FILE *file);
+int count_elems(char *line);
+int* size_of_elem_array(char *line_string, int elem_count);
+
+int main(int argc, char* argv[]){
+
+    char line_string[MAXLEN];
+    char line_string_enhanced[MAXLEN];
+    int elem_count = 0;
+    int char_count = 0;
+    int j;
+    int *size_of_elements;
+    char **u;
+
+
+    char file_name[] = "file.txt";
+    FILE* file;
+    file = fopen( file_name, "r" );
+    if(file == NULL){
+        fprintf(stderr, "cannot open file");
+        return -1;
+    }
+
+
+    // NACTENI RADKU A SECTENI ELEMENTU A VELIKOSTI JEDNOTLIVYCH ELEMENTU
+    read_line( line_string, file );
+    printf("%s", line_string);
+
+    elem_count = count_elems( line_string );
+    printf("element count: %d\n", elem_count);
+
+    size_of_elements = size_of_elem_array( line_string, elem_count );
+
+    // ALOKACE DYNAMICKEHO POLE PRO ZJISTENE VELIKOSTI 
+    u = malloc(sizeof(char*) * elem_count );
+
+    for (int i = 0; i < elem_count; i++)
+    {
+        *(u + i) = malloc(sizeof(char) * size_of_elements[i] );
+    }
+
+    // prevedeni line_string do fuckin weird formatu
+    j = 0;
+    for (int i = 2; line_string[i] != '\n'; i++, j++)
+    {
+        if( line_string[i] != ' ' ){
+            line_string_enhanced[j] = line_string[i];
+        }
+        else{
+            j--;
+        }
+    }
+    line_string_enhanced[j] = '\0';
+
+    printf("enhanced: %s\n", line_string_enhanced);
+    
+    // ZAPSANI DO DYNAMICKEHO POLE U
+    int k = 0;
+    for (int i = 0; i < elem_count; i++)
+    {
+        for (int j = 0; j < size_of_elements[i]; j++, k++)
+        {
+            u[i][j] = line_string_enhanced[k];
+        }
+        
+    }
+    
+    for (int i = 0; i < elem_count; i++)
+    {
+        for (int j = 0; j < size_of_elements[i]; j++)
+        {
+            printf("%c", u[i][j]);
+        }
+        printf(" ");
+    }
+    
+
+    printf("\n");
+    
+    for (int i = 0; i < size_of_elements[3]; i++)
+    {
+        printf("%c", u[3][i] );
+    }
+    
+    printf("\n");
+
+    
+
+
+
+fclose(file);  
+return 0;    
+}
+
+void read_line(char *line, FILE *file){
+    fgets( line, MAXLEN, file);
+}
+
+int count_elems(char *line){
+    int elem_count = 0;
+
+    for (int i = 0; line[i] != EOF ; i++)
+    {
+        if( line[i] == ' ' )
+            elem_count++;
+    }
+
+return elem_count;
+}
+
+int* size_of_elem_array(char *line_string, int elem_count){
+    int char_count = 0;
+    int *array;
+
+    array = malloc(sizeof(int) * elem_count);
+
+    int j = 0;
+    for (int i = 2; line_string[i] != EOF ; i++)
+    {
+        if( line_string[i] == ' ' || line_string[i] == '\n'){
+            array[ j ] = char_count;
+            char_count = 0;
+            j++;
+        }else
+            char_count++;
+    }
+
+return array;
+}
+
+
