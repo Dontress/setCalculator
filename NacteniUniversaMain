@@ -10,7 +10,8 @@
 // ./setcal FILE
 
 typedef struct{
-    char *items;
+    char **items;
+    int *size_of_elem_array;
     int cardinality;
 }set_t;
 
@@ -25,8 +26,11 @@ int main(int argc, char* argv[]){
     int elem_count = 0;
     int char_count = 0;
     int j;
-    int *size_of_elements;
+    int *size_of_elements_arr;
     char **u;
+    int n_of_line = 0;
+
+    set_t set[10];
 
 
     char file_name[] = "file.txt";
@@ -38,71 +42,71 @@ int main(int argc, char* argv[]){
     }
 
 
-    // NACTENI RADKU A SECTENI ELEMENTU A VELIKOSTI JEDNOTLIVYCH ELEMENTU
-    read_line( line_string, file );
-    printf("%s", line_string);
+    do{
+        // NACTENI RADKU, SECTENI ELEMENTU A VELIKOSTI JEDNOTLIVYCH ELEMENTU
+        read_line( line_string, file );
+        printf("\nwhole string: %s", line_string);
 
-    elem_count = count_elems( line_string );
-    printf("element count: %d\n", elem_count);
-
-    size_of_elements = size_of_elem_array( line_string, elem_count );
-
-    // ALOKACE DYNAMICKEHO POLE PRO ZJISTENE VELIKOSTI 
-    u = malloc(sizeof(char*) * elem_count );
-
-    for (int i = 0; i < elem_count; i++)
-    {
-        *(u + i) = malloc(sizeof(char) * size_of_elements[i] );
-    }
-
-    // prevedeni line_string do fuckin weird formatu
-    j = 0;
-    for (int i = 2; line_string[i] != '\n'; i++, j++)
-    {
-        if( line_string[i] != ' ' ){
-            line_string_enhanced[j] = line_string[i];
+        if( line_string[0] != 'S' &&  line_string[0] != 'U'){
+            printf("\nneni mnozina => break z cyklu nacitani mnozin\n");
+            break;
         }
-        else{
-            j--;
-        }
-    }
-    line_string_enhanced[j] = '\0';
+            
 
-    printf("enhanced: %s\n", line_string_enhanced);
-    
-    // ZAPSANI DO DYNAMICKEHO POLE U
-    int k = 0;
-    for (int i = 0; i < elem_count; i++)
-    {
-        for (int j = 0; j < size_of_elements[i]; j++, k++)
+        elem_count = count_elems( line_string );
+        printf("element count: %d\n", elem_count);
+
+        size_of_elements_arr = size_of_elem_array( line_string, elem_count );
+
+        // ALOKACE DYNAMICKEHO POLE PRO ZJISTENE VELIKOSTI 
+        set[n_of_line].items = malloc(sizeof(char*) * elem_count );
+
+        for (int i = 0; i < elem_count; i++)
         {
-            u[i][j] = line_string_enhanced[k];
+            *( set[n_of_line].items + i ) = malloc(sizeof(char) * size_of_elements_arr[i] );
+        }
+
+        // prevedeni line_string do fuckin weird formatu
+        j = 0;
+        for (int i = 2; line_string[i] != '\n' && line_string[i] != EOF; i++, j++)
+        {
+            if( line_string[i] != ' ' ){
+                line_string_enhanced[j] = line_string[i];
+            }
+            else{
+                j--;
+            }
+        }
+        line_string_enhanced[j] = '\0';
+
+        printf("enhanced: %s\n", line_string_enhanced);
+        
+        // ZAPSANI DO DYNAMICKEHO POLE U
+        int k = 0;
+        for (int i = 0; i < elem_count; i++)
+        {
+            for (int j = 0; j < size_of_elements_arr[i]; j++, k++)
+            {
+                set[n_of_line].items[i][j] = line_string_enhanced[k];
+            }
+            
         }
         
-    }
-    
-    for (int i = 0; i < elem_count; i++)
-    {
-        for (int j = 0; j < size_of_elements[i]; j++)
+        for (int i = 0; i < elem_count; i++)
         {
-            printf("%c", u[i][j]);
+            for (int j = 0; j < size_of_elements_arr[i]; j++)
+            {
+                printf("%c", set[n_of_line].items[i][j]);
+            }
+            printf(" ");
         }
-        printf(" ");
-    }
-    
 
-    printf("\n");
-    
-    for (int i = 0; i < size_of_elements[3]; i++)
-    {
-        printf("%c", u[3][i] );
-    }
-    
-    printf("\n");
+        
+        printf("\n");printf("\n");
+        n_of_line++;
+    }while( 1 );
 
-    
-
-
+    printf("nejsem v cyklu\n");
 
 fclose(file);  
 return 0;    
@@ -115,7 +119,7 @@ void read_line(char *line, FILE *file){
 int count_elems(char *line){
     int elem_count = 0;
 
-    for (int i = 0; line[i] != EOF ; i++)
+    for (int i = 0; line[i] != '\n' ; i++)
     {
         if( line[i] == ' ' )
             elem_count++;
