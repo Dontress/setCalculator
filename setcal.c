@@ -29,7 +29,7 @@ char* truncate_line_string(char *line_string);
 void fill_universum_items(universum_t *set, char *line_string);
 void print_universum(universum_t universum);
 set_t make_set(char *line_string, universum_t u);
-void print_set(set_t set, universum_t u);
+void print_set(set_t set, universum_t u, int number_of_set);
 
 int main(int argc, char* argv[]){
 
@@ -58,17 +58,16 @@ int main(int argc, char* argv[]){
     //print_universum( universum );
     
     read_line( line_string, file );
-  
     set[0] = make_set(line_string, universum);
-
-    print_set(set[0], universum);
+    print_set(set[0], universum, 0);
 
     read_line( line_string, file );
-    //printf("%s", line_string);
-
     set[1] = make_set(line_string, universum);
-    
-    print_set(set[1], universum);
+    print_set(set[1], universum, 1);
+
+    read_line( line_string, file );
+    set[2] = make_set(line_string, universum);
+    print_set(set[2], universum, 3);
 
 fclose(file);  
 return 0;    
@@ -231,8 +230,8 @@ set_t make_set(char *line_string, universum_t u){
 return set;
 }
 
-void print_set(set_t set, universum_t u){
-    printf("set is: \n");
+void print_set(set_t set, universum_t u, int number_of_set){
+    printf("set %d is: \n", number_of_set);
     for (int i = 0; i < set.cardinality; i++)
     {
         for (int j = 0; j < set.size_of_elem_arr[i]; j++)
