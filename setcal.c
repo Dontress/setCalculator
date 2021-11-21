@@ -10,80 +10,160 @@
 // ./setcal FILE
 
 typedef struct{
-    char *items;
+    char **items;
+    int *size_of_elem_arr;
     int cardinality;
 }set_t;
 
-void read_next_line(char* array, FILE* file);
-bool is_last_line(char* file_line);
-void string_to_set(set_t* set, char* file_line, int line_number);
-bool set_constructor(set_t* set, int cardinality);
+void read_line(char *line, FILE *file);
+int count_elems(char *line);
+int* size_of_elem_array(char *line_string, int elem_count);
+int read_universum(set_t *u, char *line_string);
+char* truncate_line_string(char *line_string);
+void fill_universum_items(set_t *set, char *line_string);
+void print_universum(set_t universum);
 
 int main(int argc, char* argv[]){
 
-    int line_number = 0;
-    char file_name[10] = {'f', 'i', 'l', 'e', '.', 't', 'x', 't'}; 
-    char file_line[MAXLEN];
-    bool lastLine = false;
-    set_t set[10];
+    char line_string[MAXLEN];
+    set_t universum;
 
+
+    char file_name[] = "file.txt";
     FILE* file;
     file = fopen( file_name, "r" );
     if(file == NULL){
         fprintf(stderr, "cannot open file");
         return -1;
     }
-    
-    // hlavni do-while pro cteni souboru po radku
-    do
-    {
-        read_next_line( file_line, file);
-        printf("%s", file_line);
-
-        if( file_line[0] == 'U' || file_line[0] == 'S' ){
-            string_to_set( &set[line_number] ,file_line, line_number);
-        }
-            
-        printf("%d\n", set[line_number].cardinality);
 
 
-        line_number++;
-    } while ( is_last_line( file_line ) == false );
-    
+    read_line( line_string, file );
+     
+    if( line_string[0] != 'U'){
+        fprintf(stderr, "prvni mnozina neni universum");
+        return -1;
+    }
+
+    if( read_universum( &universum, line_string ) ){
+        return -1;
+    }
+
+    print_universum( universum );
+        
+
+
 
 fclose(file);  
 return 0;    
 }
 
-void string_to_set(set_t* set, char* file_line, int line_number){
+// nacte dalsi radek souboru
+void read_line(char *line, FILE *file){
+    fgets( line, MAXLEN, file);
+}
 
-    int number_of_items = 0;
+// nacteni universa do mnoziny
+int read_universum(set_t *u, char *line_string){
 
-    for (int i = 0; file_line[i] != '\0'; i++)
+    u->cardinality = count_elems( line_string );
+    u->size_of_elem_arr = size_of_elem_array( line_string, u->cardinality ); 
+    
+    u->items = malloc(sizeof(char*) * u->cardinality );
+    if( u->items == NULL ){
+        fprintf(stderr, "chyba alokace universum");
+        return 1;
+    }
+
+    for (int i = 0; i < u->cardinality; i++)
     {
-        if( file_line[i] == ' ' )
-            number_of_items++;
+        *( u->items + i ) = malloc(sizeof(char) * u->size_of_elem_arr[i] );
+        if( ( u->items + i ) == NULL ){
+            fprintf(stderr, "chyba alokace universum");
+            return 1;
+        }
     }
 
-    set->cardinality = number_of_items;
+    strcpy( line_string,  truncate_line_string( line_string ) );
+    fill_universum_items( u, line_string );
 
-    set->items = malloc(sizeof(char) * number_of_items * ITEMLEN);
-    if(set->items == NULL){
-        fprintf(stderr, "set allocation failed");
+return 0; 
+}
+
+// spocitani elementu mnoziny
+int count_elems(char *line){
+    int elem_count = 0;
+
+    for (int i = 0; line[i] != '\n' ; i++)
+    {
+        if( line[i] == ' ' )
+            elem_count++;
     }
 
-   
-   
+return elem_count;
 }
 
-void read_next_line(char* file_line, FILE* file){
-    fgets( file_line, MAXLEN, file);
+// vytvoreni pole obsahujici velikost vsech prvku
+int* size_of_elem_array(char *line_string, int elem_count){
+    int char_count = 0;
+    int *array;
+
+    array = malloc(sizeof(int) * elem_count);
+
+    int j = 0;
+    for (int i = 2; line_string[i] != EOF ; i++)
+    {
+        if( line_string[i] == ' ' || line_string[i] == '\n'){
+            array[ j ] = char_count;
+            char_count = 0;
+            j++;
+        }else
+            char_count++;
+    }
+
+return array;
 }
 
-bool is_last_line(char* file_line){
-    if( strchr(file_line, '\n') == false )
-        return true;
-    else
-        return false;
+// upraveni vstupniho retezce na osekany format pro zapis
+char* truncate_line_string(char *line_string){
+    static char line_string_enhanced[MAXLEN];
+
+    int j = 0;
+    for (int i = 2; line_string[i] != '\n' && line_string[i] != EOF; i++, j++)
+    {
+        if( line_string[i] != ' ' ){
+            line_string_enhanced[j] = line_string[i];
+        }
+        else{
+            j--;
+        }
+    }
+    line_string_enhanced[j] = '\0';
+
+return line_string_enhanced;
 }
 
+// naplneni universa hodnotami
+void fill_universum_items(set_t *set, char *line_string){
+
+    int k = 0;
+    for (int i = 0; i < set->cardinality; i++)
+    {
+        for (int j = 0; j < set->size_of_elem_arr[i]; j++, k++)
+        {
+            set->items[i][j] = line_string[k];
+        }      
+    }
+}
+
+// vypise prvky universa
+void print_universum(set_t universum){
+for (int i = 0; i < universum.cardinality; i++)
+    {
+        for (int j = 0; j < universum.size_of_elem_arr[i]; j++)
+        {
+            printf("%c", universum.items[i][j]);
+        }
+        printf(" ");
+    }
+}
