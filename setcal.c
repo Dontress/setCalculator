@@ -4,7 +4,6 @@
 #include <string.h>
 
 #define MAXLEN 1024
-#define ITEMLEN 30
 
 // gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 // ./setcal FILE
