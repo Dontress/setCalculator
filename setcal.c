@@ -13,22 +13,29 @@ typedef struct{
     char **items;
     int *size_of_elem_arr;
     int cardinality;
+}universum_t;
+
+typedef struct{
+    int *set;
+    int *size_of_elem_arr;
+    int cardinality;
 }set_t;
 
 void read_line(char *line, FILE *file);
 int count_elems(char *line);
 int* size_of_elem_array(char *line_string, int elem_count);
-int read_universum(set_t *u, char *line_string);
+int read_universum(universum_t *u, char *line_string);
 char* truncate_line_string(char *line_string);
-void fill_universum_items(set_t *set, char *line_string);
-void print_universum(set_t universum);
-int make_set(char *line_string, set_t universum);
+void fill_universum_items(universum_t *set, char *line_string);
+void print_universum(universum_t universum);
+set_t make_set(char *line_string, universum_t u);
+void print_set(set_t set, universum_t u);
 
 int main(int argc, char* argv[]){
 
     char line_string[MAXLEN];
-    set_t universum;
-
+    universum_t universum;
+    set_t set[10];
 
     char file_name[] = "file.txt";
     FILE* file;
@@ -37,7 +44,6 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "cannot open file");
         return -1;
     }
-
 
     read_line( line_string, file );
      
@@ -49,19 +55,20 @@ int main(int argc, char* argv[]){
     if( read_universum( &universum, line_string ) ){
         return -1;
     }
-
-    print_universum( universum );
+    //print_universum( universum );
     
     read_line( line_string, file );
-    printf("\n%s", line_string);
+  
+    set[0] = make_set(line_string, universum);
 
-    if ( make_set( line_string, universum ) ){
-        return 1;
-    }
+    print_set(set[0], universum);
 
+    read_line( line_string, file );
+    //printf("%s", line_string);
+
+    set[1] = make_set(line_string, universum);
     
-
-
+    print_set(set[1], universum);
 
 fclose(file);  
 return 0;    
@@ -73,7 +80,7 @@ void read_line(char *line, FILE *file){
 }
 
 // nacteni universa do mnoziny
-int read_universum(set_t *u, char *line_string){
+int read_universum(universum_t *u, char *line_string){
 
     u->cardinality = count_elems( line_string );
     u->size_of_elem_arr = size_of_elem_array( line_string, u->cardinality ); 
@@ -153,7 +160,7 @@ return line_string_enhanced;
 }
 
 // naplneni universa hodnotami
-void fill_universum_items(set_t *set, char *line_string){
+void fill_universum_items(universum_t *set, char *line_string){
 
     int k = 0;
     for (int i = 0; i < set->cardinality; i++)
@@ -166,7 +173,7 @@ void fill_universum_items(set_t *set, char *line_string){
 }
 
 // vypise prvky universa
-void print_universum(set_t universum){
+void print_universum(universum_t universum){
     for (int i = 0; i < universum.cardinality; i++)
     {
         for (int j = 0; j < universum.size_of_elem_arr[i]; j++)
@@ -177,24 +184,15 @@ void print_universum(set_t universum){
     }
 }
 
-int make_set(char *line_string, set_t u){
-    int *set;
-    int number_of_elem = count_elems( line_string );
-    int *size_of_elem_arr = size_of_elem_array( line_string, number_of_elem);
+set_t make_set(char *line_string, universum_t u){
+    set_t set;
+    set.cardinality = count_elems( line_string );
+    set.size_of_elem_arr = size_of_elem_array( line_string, set.cardinality );
 
     strcpy( line_string,  truncate_line_string( line_string ) );
-    printf("\n%s\n", line_string);
-    set = malloc(sizeof(int) * number_of_elem );
+    set.set = malloc(sizeof(int) * set.cardinality );
 
-    printf("\n");
-        for (int i = 0; i < number_of_elem; i++)
-        {
-            printf("%d ", size_of_elem_arr[i]);
-        }
-        printf("\n");
-
-
-    // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje, tak jsem to radsi dal do try catch, aby jim nespadl merlin
+    // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje... snad jim to neshodi merlina
     int streak = 0;
     int k = 0;
     int j = 0;
@@ -206,7 +204,7 @@ int make_set(char *line_string, set_t u){
 
         if(j == u.cardinality && j != 1){
             fprintf(stderr, "prvek neni v universu\n");
-            return 1;
+            exit( 1 );
         }   
 
         for (j = 0; j < u.cardinality; j++)
@@ -221,8 +219,8 @@ int make_set(char *line_string, set_t u){
                 streak = 0;
             }
 
-            if(streak == size_of_elem_arr[element] && streak == u.size_of_elem_arr[j + 1]){
-                set[element] = j + 1;
+            if(streak == set.size_of_elem_arr[element] && streak == u.size_of_elem_arr[j + 1]){
+                set.set[element] = j + 1;
                 i--;
                 element++;
                 break;
@@ -230,12 +228,18 @@ int make_set(char *line_string, set_t u){
         }
     }
      
-     
-    for (int i = 0; i < number_of_elem; i++)
-    {
-        printf("%d", set[i]);
-    }
-     
+return set;
+}
 
-return 0;
+void print_set(set_t set, universum_t u){
+    printf("set is: \n");
+    for (int i = 0; i < set.cardinality; i++)
+    {
+        for (int j = 0; j < set.size_of_elem_arr[i]; j++)
+        {
+            printf("%c", u.items[set.set[i]][j]);
+        }
+        printf(" ");
+    }
+    printf("\n");
 }
