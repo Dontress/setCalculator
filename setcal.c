@@ -22,6 +22,7 @@ int read_universum(set_t *u, char *line_string);
 char* truncate_line_string(char *line_string);
 void fill_universum_items(set_t *set, char *line_string);
 void print_universum(set_t universum);
+int make_set(char *line_string, set_t universum);
 
 int main(int argc, char* argv[]){
 
@@ -50,7 +51,15 @@ int main(int argc, char* argv[]){
     }
 
     print_universum( universum );
-        
+    
+    read_line( line_string, file );
+    printf("\n%s", line_string);
+
+    if ( make_set( line_string, universum ) ){
+        return 1;
+    }
+
+    
 
 
 
@@ -158,7 +167,7 @@ void fill_universum_items(set_t *set, char *line_string){
 
 // vypise prvky universa
 void print_universum(set_t universum){
-for (int i = 0; i < universum.cardinality; i++)
+    for (int i = 0; i < universum.cardinality; i++)
     {
         for (int j = 0; j < universum.size_of_elem_arr[i]; j++)
         {
@@ -166,4 +175,67 @@ for (int i = 0; i < universum.cardinality; i++)
         }
         printf(" ");
     }
+}
+
+int make_set(char *line_string, set_t u){
+    int *set;
+    int number_of_elem = count_elems( line_string );
+    int *size_of_elem_arr = size_of_elem_array( line_string, number_of_elem);
+
+    strcpy( line_string,  truncate_line_string( line_string ) );
+    printf("\n%s\n", line_string);
+    set = malloc(sizeof(int) * number_of_elem );
+
+    printf("\n");
+        for (int i = 0; i < number_of_elem; i++)
+        {
+            printf("%d ", size_of_elem_arr[i]);
+        }
+        printf("\n");
+
+
+    // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje, tak jsem to radsi dal do try catch, aby jim nespadl merlin
+    int streak = 0;
+    int k = 0;
+    int j = 0;
+    int element = 0;
+    for (int i = 0; line_string[i] != '\0'; i++)
+    {
+        streak = 0;
+        k = 0;
+
+        if(j == u.cardinality && j != 1){
+            fprintf(stderr, "prvek neni v universu\n");
+            return 1;
+        }   
+
+        for (j = 0; j < u.cardinality; j++)
+        {
+            if(line_string[i] == u.items[j][k]){
+                j--;
+                i++;
+                k++;
+                streak++;
+            }
+            else{
+                streak = 0;
+            }
+
+            if(streak == size_of_elem_arr[element] && streak == u.size_of_elem_arr[j + 1]){
+                set[element] = j + 1;
+                i--;
+                element++;
+                break;
+            }
+        }
+    }
+     
+     
+    for (int i = 0; i < number_of_elem; i++)
+    {
+        printf("%d", set[i]);
+    }
+     
+
+return 0;
 }
