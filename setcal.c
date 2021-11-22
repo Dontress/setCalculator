@@ -55,7 +55,9 @@ int main(){
     if( read_universum( &universum, line_string ) ){
         return -1;
     }
-    //print_universum( universum );
+    printf("universum: ");
+    print_universum( universum );
+    printf("\n");
     
     for (int i = 0; i < 3; i++)
     {
@@ -118,10 +120,13 @@ return 0;
 int count_elems(char *line){
     int elem_count = 0;
 
-    for (int i = 0; line[i] != '\n' ; i++)
+    for (int i = 1; line[i] != '\n' ; i++)
     {
-        if( line[i] == ' ' )
+        if( line[i] == ' ' ){
+            if( line[i + 1] != ' ' && line[i - 1] != ' ' && line[i + 1] != '\n')    // osetreni mezer navic
             elem_count++;
+        }
+            
     }
 
 return elem_count;
@@ -196,10 +201,10 @@ void print_universum(universum_t universum){
     }
 }
 
+// vytvori set ci mnozinu (pracujeme s tim stejne)
 set_t make_set(char *line_string, universum_t u){
     set_t set;
     set.cardinality = count_elems( line_string );
-    //set.size_of_elem_arr = size_of_elem_array( line_string, set.cardinality );
 
     int char_count = 0;
     set.size_of_elem_arr = malloc(sizeof(int) * set.cardinality  );
@@ -219,6 +224,10 @@ set_t make_set(char *line_string, universum_t u){
     for (int i = 0; i < set.cardinality; i++)
         {
             set.size_of_elem_arr[i] -= 1;
+            if( set.cardinality % 2  ){
+                fprintf(stderr, "neplatne zadana relace");  // osetreni uplnosti relace (ma sudy pocet prvku => kazdy prvek je ve dvojci)
+                exit( 1 );
+            }
         }
     }
     strcpy( line_string,  truncate_line_string( line_string ) );
@@ -271,6 +280,7 @@ set_t make_set(char *line_string, universum_t u){
 return set;
 }
 
+// vypise mnozinu ci relaci
 void print_set(set_t set, universum_t u, int number_of_set){
     printf("set %d is: \n", number_of_set);
     for (int i = 0; i < set.cardinality; i++)
