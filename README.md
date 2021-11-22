@@ -1,5 +1,5 @@
-Update 22.11. nacitani mnozin i relaci funguje (snad), kdyztak napiste a ja vam pomuzu s pochopenim
-jeste zitra dodelam nejako komentare a mozna fakt mozna upravim kod
+Update 22.11. nacitani mnozin i relaci funguje (snad), kdyztak napiste a ja vam pomuzu s pochopenim.
+Jeste zitra dodelam nejako komentare a mozna fakt mozna upravim kod.
 
 
 Update call 22.11. - rozdeleni tasku  
