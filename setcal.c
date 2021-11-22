@@ -56,17 +56,26 @@ int main(){
     }
     //print_universum( universum );
     
-    read_line( line_string, file );
-    set[0] = make_set(line_string, universum);
-    print_set(set[0], universum, 0);
+    for (int i = 0; i < 3; i++)
+    {
+        read_line( line_string, file );
+        set[i] = make_set(line_string, universum);
+        print_set(set[i], universum, i);
+    }
+    
+    for (int i = 0; i < 3; i++)
+    {
+        free(set[i].set);
+        free(set[i].size_of_elem_arr);
+    }
 
-    read_line( line_string, file );
-    set[1] = make_set(line_string, universum);
-    print_set(set[1], universum, 1);
-
-    read_line( line_string, file );
-    set[2] = make_set(line_string, universum);
-    print_set(set[2], universum, 2);
+    for (int i = 0; i < universum.cardinality; i++)
+    {
+        free(universum.items[i]);
+    }
+    free(universum.items);
+    free(universum.size_of_elem_arr);
+    
 
 fclose(file);  
 return 0;    
@@ -185,7 +194,21 @@ void print_universum(universum_t universum){
 set_t make_set(char *line_string, universum_t u){
     set_t set;
     set.cardinality = count_elems( line_string );
-    set.size_of_elem_arr = size_of_elem_array( line_string, set.cardinality );
+    //set.size_of_elem_arr = size_of_elem_array( line_string, set.cardinality );
+
+    int char_count = 0;
+    set.size_of_elem_arr = malloc(sizeof(int) * set.cardinality  );
+
+    int j = 0;
+    for (int i = 2; line_string[i] != EOF && j < set.cardinality ; i++)
+    {
+        if( line_string[i] == ' ' || line_string[i] == '\n'){
+            set.size_of_elem_arr[ j ] = char_count;
+            char_count = 0;
+            j++;
+        }else
+            char_count++;
+    }
 
     if(line_string[0] == 'R'){
     for (int i = 0; i < set.cardinality; i++)
@@ -201,7 +224,7 @@ set_t make_set(char *line_string, universum_t u){
     // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje... snad jim to neshodi merlina
     int streak = 0;
     int k = 0;
-    int j = 0;
+    j = 0;
     int element = 0;
     for (int i = 0; line_string[i] != '\0'; i++)
     {
