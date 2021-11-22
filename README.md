@@ -1,3 +1,8 @@
+Update call 22.11. - rozdeleni tasku
+Petr - dodelani nacitani mnozin a relaci 
+Tomas - prikazy nad mnozinami
+Libor - prikazy nad relacemi
+
 Last update:
 21.11. 15:10 funguje a je docela upravene nacteni universa, vypis univerza a osetrene kdyz v souboru jako prvni neni universum
 
