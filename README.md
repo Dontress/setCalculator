@@ -1,3 +1,7 @@
+Update 22.11. nacitani mnozin i relaci funguje (snad), kdyztak napiste a ja vam pomuzu s pochopenim
+jeste zitra dodelam nejako komentare a mozna fakt mozna upravim kod
+
+
 Update call 22.11. - rozdeleni tasku  
 Petr - dodelani nacitani mnozin a relaci   
 Tomas - prikazy nad mnozinami  
