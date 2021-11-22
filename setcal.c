@@ -145,7 +145,7 @@ char* truncate_line_string(char *line_string){
     int j = 0;
     for (int i = 2; line_string[i] != '\n' && line_string[i] != EOF; i++, j++)
     {
-        if( line_string[i] != ' ' ){
+        if( line_string[i] != ' ' && line_string[i] != '(' && line_string[i] != ')' ){
             line_string_enhanced[j] = line_string[i];
         }
         else{
@@ -187,7 +187,15 @@ set_t make_set(char *line_string, universum_t u){
     set.cardinality = count_elems( line_string );
     set.size_of_elem_arr = size_of_elem_array( line_string, set.cardinality );
 
+    if(line_string[0] == 'R'){
+    for (int i = 0; i < set.cardinality; i++)
+        {
+            set.size_of_elem_arr[i] -= 1;
+        }
+    }
     strcpy( line_string,  truncate_line_string( line_string ) );
+    
+
     set.set = malloc(sizeof(int) * set.cardinality );
 
     // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje... snad jim to neshodi merlina
@@ -201,7 +209,7 @@ set_t make_set(char *line_string, universum_t u){
         k = 0;
 
         if(j == u.cardinality && j != 1){
-            fprintf(stderr, "prvek neni v universu\n");
+            fprintf(stderr, "chybne zadani mnoziny ci relace\n");
             exit( 1 );
         }   
 
