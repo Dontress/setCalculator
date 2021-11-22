@@ -259,6 +259,7 @@ set_t make_set(char *line_string, universum_t u){
                 break;
             }else if( streak == set.size_of_elem_arr[element] && streak != u.size_of_elem_arr[j + 1]){
                 i = i - streak;
+                streak = 0;
                 j++;
                 k = 0;
             }
