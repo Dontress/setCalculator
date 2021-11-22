@@ -8,6 +8,7 @@
 
 // gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 // ./setcal FILE
+// valgrind ./setcal -s      => memory leaks check
 
 typedef struct{
     char **items;
@@ -226,6 +227,7 @@ set_t make_set(char *line_string, universum_t u){
     set.set = malloc(sizeof(int) * set.cardinality );
 
     // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje... snad jim to neshodi merlina
+    // "if it works, it works"
     int streak = 0;
     int k = 0;
     j = 0;
