@@ -46,7 +46,7 @@ int main(){
     }
 
     read_line( line_string, file ); 
-    if( line_string[0] != 'U' ){    // podminka na maximalni delku prvku ITEMLEN
+    if( line_string[0] != 'U'){    // podminka na maximalni delku prvku ITEMLEN
         fprintf(stderr, "prvni mnozina neni platne universum");
         return -1;
     }
@@ -140,9 +140,13 @@ int* size_of_elem_array(char *line_string, int elem_count){
             array[ j ] = char_count;
             char_count = 0;
             j++;
-        }else
+        }else{
             char_count++;
+            
+        }
+            
     }
+
 
 return array;
 }
@@ -253,6 +257,10 @@ set_t make_set(char *line_string, universum_t u){
                 i--;
                 element++;
                 break;
+            }else if( streak == set.size_of_elem_arr[element] && streak != u.size_of_elem_arr[j + 1]){
+                i = i - streak;
+                j++;
+                k = 0;
             }
         }
     }
