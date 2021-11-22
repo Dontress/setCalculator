@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define MAXLEN 1024
+#define ITEMLEN 30
 
 // gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 // ./setcal FILE
@@ -30,7 +31,7 @@ void print_universum(universum_t universum);
 set_t make_set(char *line_string, universum_t u);
 void print_set(set_t set, universum_t u, int number_of_set);
 
-int main(int argc, char* argv[]){
+int main(){
 
     char line_string[MAXLEN];
     universum_t universum;
@@ -44,10 +45,9 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    read_line( line_string, file );
-     
-    if( line_string[0] != 'U'){
-        fprintf(stderr, "prvni mnozina neni universum");
+    read_line( line_string, file ); 
+    if( line_string[0] != 'U' ){    // podminka na maximalni delku prvku ITEMLEN
+        fprintf(stderr, "prvni mnozina neni platne universum");
         return -1;
     }
 
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
 
     read_line( line_string, file );
     set[2] = make_set(line_string, universum);
-    print_set(set[2], universum, 3);
+    print_set(set[2], universum, 2);
 
 fclose(file);  
 return 0;    
@@ -225,7 +225,7 @@ set_t make_set(char *line_string, universum_t u){
             }
         }
     }
-     
+ 
 return set;
 }
 
@@ -235,7 +235,7 @@ void print_set(set_t set, universum_t u, int number_of_set){
     {
         for (int j = 0; j < set.size_of_elem_arr[i]; j++)
         {
-            printf("%c", u.items[set.set[i]][j]);
+            printf("%c", u.items[ set.set[i] ][ j ]);
         }
         printf(" ");
     }
