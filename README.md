@@ -4,8 +4,8 @@ Update 23.11. - postup a rozdeleni tasku
 3) Kazdy vytvoreni sve vlastni branche
 4) naimplementovani jednotlivych funkci pro provedeni prikazu a tisku vysledku  
 -> Julie - prvni tri prikazy z mnozin i relaci  
--> Tomas - ostatni prikazy z mnozin
--> Libor - ostatni prikazy z relaci
+-> Tomas - ostatni prikazy z mnozin  
+-> Libor - ostatni prikazy z relaci  
 
 Update 22.11. nacitani mnozin i relaci funguje (snad), kdyztak napiste a ja vam pomuzu s pochopenim.
 Jeste zitra dodelam nejako komentare a mozna fakt mozna upravim kod.
