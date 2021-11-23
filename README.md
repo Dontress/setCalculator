@@ -1,11 +1,15 @@
+Update 23.11. - postup a rozdeleni tasku  
+1) Petr - komentare a uprava kodu (mozna :D )  
+2) Libor - funkce pro cteni prikazu  
+3) Kazdy vytvoreni sve vlastni branche
+4) naimplementovani jednotlivych funkci pro provedeni prikazu a tisku vysledku  
+-> Julie - prvni tri prikazy z mnozin i relaci  
+-> Tomas - ostatni prikazy z mnozin
+-> Libor - ostatni prikazy z relaci
+
 Update 22.11. nacitani mnozin i relaci funguje (snad), kdyztak napiste a ja vam pomuzu s pochopenim.
 Jeste zitra dodelam nejako komentare a mozna fakt mozna upravim kod.
 
-
-Update call 22.11. - rozdeleni tasku  
-Petr - dodelani nacitani mnozin a relaci   
-Tomas - prikazy nad mnozinami  
-Libor - prikazy nad relacemi  
 
 Last update:
 21.11. 15:10 funguje a je docela upravene nacteni universa, vypis univerza a osetrene kdyz v souboru jako prvni neni universum
