@@ -5,6 +5,9 @@
 
 #define MAXLEN 1024
 #define ITEMLEN 30
+#define MAXLINES 1000
+#define NUM_OF_COMMANDS 19
+#define COMMAND_MAXLEN 15
 
 // gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 // ./setcal FILE
@@ -22,7 +25,8 @@ typedef struct{
     int cardinality;
 }set_t;
 
-void read_line(char *line, FILE *file);
+bool read_line(char *line, FILE *file);
+int count_sets(char *line, FILE *file );
 int count_elems(char *line);
 int* size_of_elem_array(char *line_string, int elem_count);
 int read_universum(universum_t *u, char *line_string);
@@ -31,12 +35,23 @@ void fill_universum_items(universum_t *set, char *line_string);
 void print_universum(universum_t universum);
 set_t make_set(char *line_string, universum_t u);
 void print_set(set_t set, universum_t u, int number_of_set);
+//void print_command_result(char *line_string, set_t* set, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
 
 int main(){
 
-    char line_string[MAXLEN];
+    char line_string[MAXLEN] = {};
+    /**
+    char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN] = {
+        "empty", "card", "complement", "union", "intersect",
+        "minus", "subseteq", "subset", "equals", "reflexive",
+        "symmetric", "antisymmetric", "transitive", "function", "domain",
+        "codomain", "injective", "surjective", "bijective"
+    };
+    */
+    int sets_in_file = 0;
+    int commands_in_file = 0;
     universum_t universum;
-    set_t set[10];
+    set_t *set;
 
     char file_name[] = "file.txt";
     FILE* file;
@@ -44,6 +59,22 @@ int main(){
     if(file == NULL){
         fprintf(stderr, "cannot open file");
         return -1;
+    }
+
+    sets_in_file = count_sets( line_string, file );
+
+    if (sets_in_file > (MAXLINES - 1)) { // (MAXLINES - 1) = (MAXLINES - radek univerza)
+        fprintf(stderr, "presazen podporovany pocet radku");
+        return -1;
+    }
+
+    rewind(file);
+
+    // alokuj pamet pro pole setu
+    set = malloc(sets_in_file*sizeof(set_t));
+    if( set == NULL ){
+        fprintf(stderr, "chyba alokace pole setu");
+        return 1;
     }
 
     read_line( line_string, file ); 
@@ -59,14 +90,26 @@ int main(){
     print_universum( universum );
     printf("\n");
     
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < sets_in_file; i++)
     {
         read_line( line_string, file );
         set[i] = make_set(line_string, universum);
         print_set(set[i], universum, i);
     }
+
+    // cteni a provadeni prikazu
+    while (read_line( line_string, file )) {
+        
+        commands_in_file++;
+        if ((sets_in_file + commands_in_file) > (MAXLINES - 1)) {
+            fprintf(stderr, "presazen podporovany pocet radku");
+            return -1;
+        }
+
+        //print_command_result(line_string, set, commands);
+    }
     
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < sets_in_file; i++)
     {
         free(set[i].set);
         free(set[i].size_of_elem_arr);
@@ -78,6 +121,7 @@ int main(){
     }
     free(universum.items);
     free(universum.size_of_elem_arr);
+    free(set);
     
 
 fclose(file);  
@@ -85,8 +129,26 @@ return 0;
 }
 
 // nacte dalsi radek souboru
-void read_line(char *line, FILE *file){
-    fgets( line, MAXLEN, file);
+bool read_line(char *line, FILE *file){
+    if (fgets( line, MAXLEN, file) != NULL) {
+        return true;
+    }
+    return false;
+}
+
+// spocitani mnozin a relaci v souboru
+int count_sets(char *line, FILE *file ) {
+
+    int sets_in_file = 0;
+
+    while (fgets( line, MAXLEN, file ) != NULL)
+    {
+        if ( line[0] == 'S' || line[0] == 'R') {
+            sets_in_file++;
+        }
+    }
+
+    return sets_in_file;
 }
 
 // nacteni universa do mnoziny
@@ -135,9 +197,7 @@ return elem_count;
 // vytvoreni pole obsahujici velikost vsech prvku
 int* size_of_elem_array(char *line_string, int elem_count){
     int char_count = 0;
-    int *array;
-
-    array = malloc(sizeof(int) * elem_count);
+    int *array = malloc(sizeof(int) * elem_count);
 
     int j = 0;
     for (int i = 2; line_string[i] != EOF ; i++)
@@ -283,6 +343,11 @@ return set;
 // vypise mnozinu ci relaci
 void print_set(set_t set, universum_t u, int number_of_set){
     printf("set %d is: \n", number_of_set);
+    // vymazat
+    for (int i = 0; i < set.cardinality; i++) {
+        printf ("%d ", set.set[i]);
+    }
+    // vymazat
     for (int i = 0; i < set.cardinality; i++)
     {
         for (int j = 0; j < set.size_of_elem_arr[i]; j++)
@@ -293,3 +358,32 @@ void print_set(set_t set, universum_t u, int number_of_set){
     }
     printf("\n");
 }
+
+// precti prikaz a zavolej funkci pro provedeni prikazu
+/**
+void print_command_result(char *line_string, set_t* set, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]) {
+
+    if (line_string[0] != 'C' && line_string[1] != ' ') {
+        fprintf(stderr, "chybne zadany prikaz");
+        exit( 1 );
+    }
+
+    char cur_command[COMMAND_MAXLEN];
+    for (int i = 0; i < COMMAND_MAXLEN; i++) {
+        if (line_string[i + 2] == ' ') {
+            break;
+        }
+        cur_command[i] = line_string[i + 2];
+    }
+    printf("%s\n", cur_command); // vymazat
+
+    for (int i = 0; i < NUM_OF_COMMANDS; i++) {
+        if (strcmp( cur_command, commands[i] ) == 0) {
+            printf ("%d\n", i);
+        }
+    }
+
+    printf("%d\n", set[2].set[2]);
+
+}
+*/
