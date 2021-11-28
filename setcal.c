@@ -11,7 +11,9 @@
 
 // gcc -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 // ./setcal FILE
-// valgrind ./setcal -s      => memory leaks check
+// valgrind --track-origins=yes --leak-check=full -s ./setcal      => memory leaks check
+// prekladani s -g, aby valgrind ukazoval cisla radku s chybami:
+// gcc -g -std=c99 -Wall -Wextra -Werror setcal.c -o setcal
 
 typedef struct{
     char **items;
@@ -39,7 +41,7 @@ void print_set(set_t set, universum_t u, int number_of_set);
 
 int main(){
 
-    char line_string[MAXLEN] = {};
+    char line_string[MAXLEN] = "";
     /**
     char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN] = {
         "empty", "card", "complement", "union", "intersect",
@@ -50,7 +52,13 @@ int main(){
     */
     int sets_in_file = 0;
     int commands_in_file = 0;
-    universum_t universum;
+
+    universum_t *universum = malloc(sizeof(universum_t));
+    if( universum == NULL ){
+        fprintf(stderr, "chyba alokace univerza");
+        return -1;
+    }
+
     set_t *set;
 
     char file_name[] = "file.txt";
@@ -74,7 +82,7 @@ int main(){
     set = malloc(sets_in_file*sizeof(set_t));
     if( set == NULL ){
         fprintf(stderr, "chyba alokace pole setu");
-        return 1;
+        return -1;
     }
 
     read_line( line_string, file ); 
@@ -83,18 +91,18 @@ int main(){
         return -1;
     }
 
-    if( read_universum( &universum, line_string ) ){
+    if( read_universum( universum, line_string ) ){
         return -1;
     }
     printf("universum: ");
-    print_universum( universum );
+    print_universum( *universum );
     printf("\n");
     
     for (int i = 0; i < sets_in_file; i++)
     {
         read_line( line_string, file );
-        set[i] = make_set(line_string, universum);
-        print_set(set[i], universum, i);
+        set[i] = make_set(line_string, *universum);
+        print_set(set[i], *universum, i);
     }
 
     // cteni a provadeni prikazu
@@ -115,12 +123,13 @@ int main(){
         free(set[i].size_of_elem_arr);
     }
 
-    for (int i = 0; i < universum.cardinality; i++)
+    for (int i = 0; i < universum->cardinality; i++)
     {
-        free(universum.items[i]);
+        free(universum->items[i]);
     }
-    free(universum.items);
-    free(universum.size_of_elem_arr);
+    free(universum->items);
+    free(universum->size_of_elem_arr);
+    free(universum);
     free(set);
     
 
@@ -200,12 +209,17 @@ int* size_of_elem_array(char *line_string, int elem_count){
     int *array = malloc(sizeof(int) * elem_count);
 
     int j = 0;
-    for (int i = 2; line_string[i] != EOF ; i++)
+    for (int i = 2; i < MAXLEN; i++) // puvodni podminka line_string[i] != EOF
     {
-        if( line_string[i] == ' ' || line_string[i] == '\n'){
+        if( line_string[i] == ' ' ){
             array[ j ] = char_count;
             char_count = 0;
             j++;
+        }else if( line_string[i] == '\n'){
+            array[ j ] = char_count;
+            char_count = 0;
+            j++;
+            break;
         }else{
             char_count++;
             
@@ -343,11 +357,6 @@ return set;
 // vypise mnozinu ci relaci
 void print_set(set_t set, universum_t u, int number_of_set){
     printf("set %d is: \n", number_of_set);
-    // vymazat
-    for (int i = 0; i < set.cardinality; i++) {
-        printf ("%d ", set.set[i]);
-    }
-    // vymazat
     for (int i = 0; i < set.cardinality; i++)
     {
         for (int j = 0; j < set.size_of_elem_arr[i]; j++)
