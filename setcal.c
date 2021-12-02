@@ -41,6 +41,8 @@ set_t make_set(char *line_string, universum_t u);
 void print_set(set_t set, universum_t u, int number_of_set);
 void print_command_result(char *line_string, set_t* set, universum_t u, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
 int load_set_id(char *line_string, int *pos_after_command);
+void copy_set(int *set_1, int *set_2, int n);
+void transitive(set_t set);
 void domain(set_t set, universum_t u);
 
 int main(){
@@ -468,6 +470,9 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         // sem funkce
         // priklad:
         switch (cur_command_id) {
+            case 12:
+                transitive ( set[ command_set_id_1 ]);
+                break;
             case 14:
                 domain( set[ command_set_id_1 ], u);
                 break;
@@ -528,35 +533,88 @@ int load_set_id(char *line_string, int *pos_after_command) {
     return (command_set_id - 1); // odecitame 1, protoze v argumentech se indexuje od 1
 }
 
+// zkopiruje pole integeru
+void copy_set(int *set_1, int *set_2, int n) {
+    for (int i = 0; i < n; i++) {
+        set_1[i] = set_2[i];
+    }
+}
+
+// 12 - tranzitivita relace
+void transitive(set_t set) {
+
+    bool is_transitive = false;
+
+    for (int i = 0; i < set.cardinality; i += 2) {
+        for (int j = 0; j < set.cardinality; j += 2) {
+            if (set.set[i + 1] == set.set[j]) {     // aRb && bRc
+
+                is_transitive = false;
+
+                for (int k = 0; k < set.cardinality; k += 2) {
+                    if (( set.set[i] == set.set[k] ) && ( set.set[j + 1] == set.set[k + 1] )) {     // aRc
+                        is_transitive = true;
+                        break;
+                    }
+                }
+
+                if (!is_transitive) {
+                    break;
+                }
+            }
+        }
+        if (!is_transitive) {
+            printf("false\n");
+            break;
+        }
+    }
+
+    if (is_transitive) {
+        printf("true\n");
+    }
+
+}
+
 // 14 - definicni obor relace
 void domain(set_t set, universum_t u) {
 
-    // usporadej prvni prvky dvojic do prvni poloviny pole
-    for (int i = 0; i < (set.cardinality / 2); i++) {
-        set.set[i] = set.set[2*i];
+    int cardinality = set.cardinality;
+    int *copied_set = malloc(sizeof(int) * cardinality);
+    if( copied_set == NULL ){
+        fprintf(stderr, "chyba alokace setu");
+        exit ( 1 );
     }
-    set.cardinality = (set.cardinality / 2);
+    copy_set(copied_set, set.set, cardinality);
+
+    // usporadej prvni prvky dvojic do prvni poloviny pole
+    for (int i = 0; i < (cardinality / 2); i++) {
+        copied_set[i] = copied_set[2*i];
+    }
+    cardinality = (cardinality / 2);
 
     // oznac opakujici se prvky ktere nebudes tisknout
-    for (int i = 0; i < set.cardinality; i++) {
-        for (int j = (i + 1); j < set.cardinality; j++) {
-            if ( set.set[i] == set.set[j]) {
-                set.set[j] = -1;
+    for (int i = 0; i < cardinality; i++) {
+        for (int j = (i + 1); j < cardinality; j++) {
+            if ( copied_set[i] == copied_set[j]) {
+                copied_set[j] = -1;
             }
         }
     }
 
     // tiskni vysledek
     printf("S ");
-    for (int i = 0; i < set.cardinality; i++) {
-        if (set.set[i] == -1) {
+    for (int i = 0; i < cardinality; i++) {
+        if (copied_set[i] == -1) {
             continue;
         }
-        for (int j = 0; j < u.size_of_elem_arr[ set.set[i] ]; j++) {
-            printf("%c", u.items[ set.set[i] ][ j ]);
+        for (int j = 0; j < u.size_of_elem_arr[ copied_set[i] ]; j++) {
+            printf("%c", u.items[ copied_set[i] ][ j ]);
         }
         printf(" ");
     }
     printf("\n");
     
+    free(copied_set);
+
 }
+
