@@ -41,7 +41,11 @@ set_t make_set(char *line_string, universum_t u);
 void print_set(set_t set, universum_t u, int number_of_set);
 void print_command_result(char *line_string, set_t* set, universum_t u, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
 int load_set_id(char *line_string, int *pos_after_command);
+void copy_set(int *set_1, int *set_2, int n);
+void transitive(set_t set);
+void function(set_t set);
 void domain(set_t set, universum_t u);
+void codomain(set_t set, universum_t u);
 
 int main(){
 
@@ -53,7 +57,8 @@ int main(){
         "codomain", "injective", "surjective", "bijective"
     };
     int sets_in_file = 0;
-    int commands_in_file = 0;
+    //int commands_in_file = 0;
+    int line_no = 0;
 
     universum_t *universum = malloc(sizeof(universum_t));
     if( universum == NULL ){
@@ -61,7 +66,11 @@ int main(){
         return -1;
     }
 
-    set_t *set;
+    set_t *set = malloc(sizeof(set_t)*10);
+    if( set == NULL ){
+        fprintf(stderr, "chyba alokace setu");
+        return -1;
+    }
 
     char file_name[] = "file.txt";
     FILE* file;
@@ -71,21 +80,14 @@ int main(){
         return -1;
     }
 
+    /**
     sets_in_file = count_sets( line_string, file );
 
     if (sets_in_file > (MAXLINES - 1)) { // (MAXLINES - 1) = (MAXLINES - radek univerza)
         fprintf(stderr, "presazen podporovany pocet radku");
         return -1;
     }
-
-    rewind(file);
-
-    // alokuj pamet pro pole setu 
-    set = malloc((sets_in_file + 1)*sizeof(set_t)); // sets_in_file + 1 = sets_in_file + univerzum
-    if( set == NULL ){
-        fprintf(stderr, "chyba alokace pole setu");
-        return -1;
-    }
+*/
 
     read_line( line_string, file ); 
     if( line_string[0] != 'U'){    // podminka na maximalni delku prvku ITEMLEN
@@ -96,24 +98,48 @@ int main(){
     if( read_universum( universum, line_string ) ){
         return -1;
     }
+
+    // ulozi univerzum jako set a vytiskne ho
+    sets_in_file++;
+    set[line_no] = make_set(line_string, *universum);
+    print_set(set[line_no], *universum, line_no);
     //printf("universum: ");
     //print_universum( *universum );
     //printf("\n");
-    
-    rewind(file);
 
+    // cte, uklada a tiskne mnoziny a relace ze souboru
+    while (read_line( line_string, file ) && (line_string[0] == 'S' || line_string[0] == 'R')) {
+
+        line_no++;
+        if (line_no > (MAXLINES - 1)) {
+            fprintf(stderr, "presazen podporovany pocet radku");
+            return -1;
+        }
+
+        set = realloc(set, sizeof(set_t)*(line_no + 1));
+        if( set == NULL ){
+            fprintf(stderr, "chyba alokace pole setu");
+            return -1;
+        }
+        sets_in_file++;
+        set[line_no] = make_set(line_string, *universum);
+        print_set(set[line_no], *universum, line_no);
+    }
+
+    /**
     for (int i = 0; i < sets_in_file + 1; i++)
     {
         read_line( line_string, file );
         set[i] = make_set(line_string, *universum);
         print_set(set[i], *universum, i);
     }
+    */
 
     // cteni a provadeni prikazu
-    while (read_line( line_string, file )) {
+    while (read_line( line_string, file ) && line_string[0] == 'C') {
 
-        commands_in_file++;
-        if ((sets_in_file + commands_in_file) > (MAXLINES - 1)) {
+        line_no++;
+        if (line_no > (MAXLINES - 1)) {
             fprintf(stderr, "presazen podporovany pocet radku");
             return -1;
         }
@@ -121,7 +147,7 @@ int main(){
         print_command_result(line_string, set, *universum, commands);
     }
     
-    for (int i = 0; i < sets_in_file + 1; i++)
+    for (int i = 0; i < sets_in_file; i++)
     {
         free(set[i].set);
         free(set[i].size_of_elem_arr);
@@ -468,8 +494,17 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         // sem funkce
         // priklad:
         switch (cur_command_id) {
+            case 12:
+                transitive ( set[ command_set_id_1 ] );
+                break;
+            case 13:
+                function ( set[ command_set_id_1 ] );
+                break;
             case 14:
-                domain( set[ command_set_id_1 ], u);
+                domain( set[ command_set_id_1 ], u );
+                break;
+            case 15:
+                codomain( set[ command_set_id_1 ], u );
                 break;
         }
 
@@ -528,35 +563,154 @@ int load_set_id(char *line_string, int *pos_after_command) {
     return (command_set_id - 1); // odecitame 1, protoze v argumentech se indexuje od 1
 }
 
+// zkopiruje pole integeru
+void copy_set(int *set_1, int *set_2, int n) {
+    for (int i = 0; i < n; i++) {
+        set_1[i] = set_2[i];
+    }
+}
+
+// 12 - tranzitivita relace
+void transitive(set_t set) {
+
+    bool is_transitive = false;
+
+    for (int i = 0; i < set.cardinality; i += 2) {
+        for (int j = 0; j < set.cardinality; j += 2) {
+            if (set.set[i + 1] == set.set[j]) {     // aRb && bRc
+
+                is_transitive = false;
+
+                for (int k = 0; k < set.cardinality; k += 2) {
+                    if (( set.set[i] == set.set[k] ) && ( set.set[j + 1] == set.set[k + 1] )) {     // aRc
+                        is_transitive = true;
+                        break;
+                    }
+                }
+
+                if (!is_transitive) {
+                    break;
+                }
+            }
+        }
+        if (!is_transitive) {
+            printf("false\n");
+            break;
+        }
+    }
+
+    if (is_transitive) {
+        printf("true\n");
+    }
+
+}
+
+// 13 - zjisti jestli je relace funkci
+void function(set_t set) {
+
+    bool is_function = true;
+
+    for (int i = 0; i < set.cardinality; i += 2) {
+        for (int j = (i + 2); j < set.cardinality; j += 2) {
+            if ( set.set[i] == set.set[j] && set.set[i + 1] != set.set[j + 1] ) {
+                is_function = false;
+                break;
+            }
+        }
+
+        if (!is_function) {
+            printf("false\n");
+            break;
+        }
+    }
+
+    if (is_function) {
+        printf("true\n");
+    }
+
+}
+
 // 14 - definicni obor relace
 void domain(set_t set, universum_t u) {
 
-    // usporadej prvni prvky dvojic do prvni poloviny pole
-    for (int i = 0; i < (set.cardinality / 2); i++) {
-        set.set[i] = set.set[2*i];
+    int cardinality = set.cardinality;
+    int *copied_set = malloc(sizeof(int) * cardinality);
+    if( copied_set == NULL ){
+        fprintf(stderr, "chyba alokace setu");
+        exit ( 1 );
     }
-    set.cardinality = (set.cardinality / 2);
+    copy_set(copied_set, set.set, cardinality);
+
+    // usporadej prvni prvky dvojic do prvni poloviny pole
+    for (int i = 0; i < (cardinality / 2); i++) {
+        copied_set[i] = copied_set[2*i];
+    }
+    cardinality = (cardinality / 2);
 
     // oznac opakujici se prvky ktere nebudes tisknout
-    for (int i = 0; i < set.cardinality; i++) {
-        for (int j = (i + 1); j < set.cardinality; j++) {
-            if ( set.set[i] == set.set[j]) {
-                set.set[j] = -1;
+    for (int i = 0; i < cardinality; i++) {
+        for (int j = (i + 1); j < cardinality; j++) {
+            if ( copied_set[i] == copied_set[j]) {
+                copied_set[j] = -1;
             }
         }
     }
 
     // tiskni vysledek
     printf("S ");
-    for (int i = 0; i < set.cardinality; i++) {
-        if (set.set[i] == -1) {
+    for (int i = 0; i < cardinality; i++) {
+        if (copied_set[i] == -1) {
             continue;
         }
-        for (int j = 0; j < u.size_of_elem_arr[ set.set[i] ]; j++) {
-            printf("%c", u.items[ set.set[i] ][ j ]);
+        for (int j = 0; j < u.size_of_elem_arr[ copied_set[i] ]; j++) {
+            printf("%c", u.items[ copied_set[i] ][ j ]);
         }
         printf(" ");
     }
     printf("\n");
     
+    free(copied_set);
 }
+
+// 15 - obor hodnot relace
+void codomain(set_t set, universum_t u) {
+
+    int cardinality = set.cardinality;
+    int *copied_set = malloc(sizeof(int) * cardinality);
+    if( copied_set == NULL ){
+        fprintf(stderr, "chyba alokace setu");
+        exit ( 1 );
+    }
+    copy_set(copied_set, set.set, cardinality);
+
+    // usporadej druhe prvky dvojic do prvni poloviny pole
+    for (int i = 0; i < (cardinality / 2); i++) {
+        copied_set[i] = copied_set[2*i + 1];
+    }
+    cardinality = (cardinality / 2);
+
+    // oznac opakujici se prvky ktere nebudes tisknout
+    for (int i = 0; i < cardinality; i++) {
+        for (int j = (i + 1); j < cardinality; j++) {
+            if ( copied_set[i] == copied_set[j]) {
+                copied_set[j] = -1;
+            }
+        }
+    }
+
+    // tiskni vysledek
+    printf("S ");
+    for (int i = 0; i < cardinality; i++) {
+        if (copied_set[i] == -1) {
+            continue;
+        }
+        for (int j = 0; j < u.size_of_elem_arr[ copied_set[i] ]; j++) {
+            printf("%c", u.items[ copied_set[i] ][ j ]);
+        }
+        printf(" ");
+    }
+    printf("\n");
+    
+    free(copied_set);
+}
+
