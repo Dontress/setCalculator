@@ -34,6 +34,7 @@ int count_sets(char *line, FILE *file );
 int count_elems(char *line);
 int* size_of_elem_array(char *line_string, int elem_count);
 int read_universum(universum_t *u, char *line_string);
+void universum_to_set(universum_t *u, set_t *set);
 char* truncate_line_string(char *line_string);
 void fill_universum_items(universum_t *set, char *line_string);
 void print_universum(universum_t universum);
@@ -66,11 +67,7 @@ int main(){
         return -1;
     }
 
-    set_t *set = malloc(sizeof(set_t)*10);
-    if( set == NULL ){
-        fprintf(stderr, "chyba alokace setu");
-        return -1;
-    }
+    
 
     char file_name[] = "file.txt";
     FILE* file;
@@ -89,6 +86,12 @@ int main(){
     }
 */
 
+    set_t *set = malloc(sizeof(set_t));
+    if( set == NULL ){
+        fprintf(stderr, "chyba alokace setu");
+        return -1;
+    }
+
     read_line( line_string, file ); 
     if( line_string[0] != 'U'){    // podminka na maximalni delku prvku ITEMLEN
         fprintf(stderr, "prvni mnozina neni platne universum");
@@ -100,8 +103,10 @@ int main(){
     }
 
     // ulozi univerzum jako set a vytiskne ho
+    
     sets_in_file++;
-    set[line_no] = make_set(line_string, *universum);
+    universum_to_set(universum, set);
+    //set[line_no] = make_set(line_string, *universum);
     print_set(set[line_no], *universum, line_no);
     //printf("universum: ");
     //print_universum( *universum );
@@ -216,6 +221,26 @@ int read_universum(universum_t *u, char *line_string){
 
 return 0; 
 }
+
+void universum_to_set(universum_t *u, set_t *set) {
+    set->set = malloc(sizeof(int) * u->cardinality );
+    if( set->set == NULL ){
+        fprintf(stderr, "chyba alokace set");
+        exit( 1 );
+    }
+    set->size_of_elem_arr = malloc(sizeof(int) * u->cardinality);
+    if( set->size_of_elem_arr == NULL ){
+        fprintf(stderr, "chyba alokace set");
+        exit( 1 );
+    }
+    for (int i = 0; i < u->cardinality; i++) {
+        set->set[i] = i;
+        set->size_of_elem_arr[i] = u->size_of_elem_arr[i];
+    }
+    set->cardinality = u->cardinality;
+    set->set_or_rel = 'S';
+}
+
 
 // spocitani elementu mnoziny
 int count_elems(char *line){
@@ -632,6 +657,8 @@ void function(set_t set) {
 
 // 14 - definicni obor relace
 void domain(set_t set, universum_t u) {
+
+    printf("XD");
 
     int cardinality = set.cardinality;
     int *copied_set = malloc(sizeof(int) * cardinality);
