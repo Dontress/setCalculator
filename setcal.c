@@ -63,7 +63,7 @@ void print_set_int(int *set, universum_t u, int cardinality);
 
 
 int main(int argc, char *argv[]){
-    /**
+    
     if(argc < 2) {
         fprintf(stderr, "chybi argument s nazvem souboru");
         return -1;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "neplatny pocet argumentu");
         return -1;
     }
-    */
+    
     char line_string[MAXLEN] = "";
     char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN] = {
         "empty", "card", "complement", "union", "intersect",
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]){
     }
 
     FILE* file;
-    file = fopen( /**argv[argc-1]*/"file.txt", "r" );
+    file = fopen( argv[argc-1], "r" );
     if(file == NULL){
         fprintf(stderr, "cannot open file");
         return -1;
