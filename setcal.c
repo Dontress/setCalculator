@@ -54,8 +54,20 @@ void reflexive(set_t * set, universum_t universum);
 void symmetric(set_t * set);
 void antisymmetric(set_t * set);
 void print_set_int(int *set, universum_t u, int cardinality);
+void set_oper(set_t set1, set_t set2, universum_t u, char type);
+void subset_oper(set_t set1, set_t set2, universum_t u, char type);
 
-int main(){
+int main(int argc, char *argv[]){
+
+    if(argc < 2) {
+        fprintf(stderr, "chybi argument s nazvem souboru");
+        return -1;
+    }
+
+    if(argc > 2) {
+        fprintf(stderr, "neplatny pocet argumentu");
+        return -1;
+    }
 
     char line_string[MAXLEN] = "";
     char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN] = {
@@ -65,7 +77,6 @@ int main(){
         "codomain", "injective", "surjective", "bijective"
     };
     int sets_in_file = 0;
-    //int commands_in_file = 0;
     int line_no = 0;
 
     universum_t *universum = malloc(sizeof(universum_t));
@@ -74,24 +85,13 @@ int main(){
         return -1;
     }
 
-    
-
     char file_name[] = "file.txt";
     FILE* file;
-    file = fopen( file_name, "r" );
+    file = fopen( argv[argc-1], "r" );
     if(file == NULL){
         fprintf(stderr, "cannot open file");
         return -1;
     }
-
-    /**
-    sets_in_file = count_sets( line_string, file );
-
-    if (sets_in_file > (MAXLINES - 1)) { // (MAXLINES - 1) = (MAXLINES - radek univerza)
-        fprintf(stderr, "presazen podporovany pocet radku");
-        return -1;
-    }
-*/
 
     set_t *set = malloc(sizeof(set_t));
     if( set == NULL ){
@@ -524,7 +524,26 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             exit( 1 );
         }
 
-        // sem funkce
+        switch (cur_command_id) {
+            case 3:
+                set_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'u' );
+                break;
+            case 4:
+                set_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'i' );
+                break;
+            case 5:
+                set_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'm' );
+                break;
+            case 6:
+                subset_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'p' );
+                break;
+            case 7:
+                subset_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'v' );
+                break;
+            case 8:
+                subset_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'r' );
+                break;
+        }
 
     } else if (cur_command_id >= 9 && cur_command_id <= 15) {    // reflexive - codomain: 1 relace na vstupu
         if (line_string[ pos_after_command ] != '\n') {
@@ -875,5 +894,50 @@ void print_set_int(int *set, universum_t u, int cardinality){
         printf(" ");
     }
     printf("\n");
+}
+
+void set_oper(set_t set1, set_t set2, universum_t u, char type) {
+
+    printf("S");
+
+    for (int i = 0; i < u.cardinality; i++)
+    {
+        bool found_set1 = false;
+        bool found_set2 = false;
+        for (int j = 0; j < set1.cardinality; j++)
+        if (i == set1.set[j]) found_set1 = true;
+        for (int j = 0; j < set2.cardinality; j++)
+        if (i == set2.set[j]) found_set2 = true;
+        if (type == 'u' && (found_set1 || found_set2)) printf(" %s", u.items[i]);
+        else if (type == 'i' && (found_set1 && found_set2)) printf(" %s", u.items[i]);
+        else if (type == 'm' && (found_set1 && !found_set2)) printf(" %s", u.items[i]);
+    }
+
+    printf("\n");
+
+}
+
+// 6, 7, 8 - podmnozina, vlastni podmnozina, rovnost
+void subset_oper(set_t set1, set_t set2, universum_t u, char type) {
+
+    bool p = true;
+    bool r = true;
+
+    for (int i = 0; i < u.cardinality; i++)
+    {
+        bool found_set1 = false;
+        bool found_set2 = false;
+        for (int j = 0; j < set1.cardinality; j++)
+        if (i == set1.set[j]) found_set1 = true;
+        for (int j = 0; j < set2.cardinality; j++)
+        if (i == set2.set[j]) found_set2 = true;
+        if (found_set1 && !found_set2) p = false;
+        if ((found_set1 && !found_set2) || (!found_set1 && found_set2)) r = false;
+    }
+
+    type == 'p' ? p ? printf("true\n") : printf("false\n") :
+    type == 'r' ? r ? printf("true\n") : printf("false\n") :
+            p && !r ? printf("true\n") : printf("false\n") ;
+
 }
 
