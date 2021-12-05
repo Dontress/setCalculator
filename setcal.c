@@ -30,7 +30,6 @@ typedef struct{
 }set_t;
 
 bool read_line(char *line, FILE *file);
-int count_sets(char *line, FILE *file );
 int count_elems(char *line);
 int* size_of_elem_array(char *line_string, int elem_count);
 int read_universum(universum_t *u, char *line_string);
@@ -65,6 +64,7 @@ void print_set_int(int *set, universum_t u, int cardinality);
 
 int main(int argc, char *argv[]){
     
+    // kontrola spravneho poctu argumentu
     if(argc < 2) {
         fprintf(stderr, "chybi argument s nazvem souboru");
         return -1;
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]){
     }
 
     read_line( line_string, file ); 
-    if( line_string[0] != 'U'){    // podminka na maximalni delku prvku ITEMLEN
+    if( line_string[0] != 'U'){   
         fprintf(stderr, "prvni mnozina neni platne universum");
         return -1;
     }
@@ -130,6 +130,7 @@ int main(int argc, char *argv[]){
             return -1;
         }
 
+        // alokuje misto pro dalsi mnozinu
         set = realloc(set, sizeof(set_t)*(line_no + 1));
         if( set == NULL ){
             fprintf(stderr, "chyba alokace pole setu");
@@ -150,16 +151,19 @@ int main(int argc, char *argv[]){
         }
 
         print_command_result(line_string, set, *universum, commands);
+
         if( read_line( line_string, file ) == false)
             break;
     }
     
+    // uvolni z pameti mnoziny
     for (int i = 0; i < sets_in_file; i++)
     {
         free(set[i].set);
         free(set[i].size_of_elem_arr);
     }
 
+    // uvolni z pameti universum
     for (int i = 0; i < universum->cardinality; i++)
     {
         free(universum->items[i]);
@@ -186,21 +190,6 @@ bool read_line(char *line, FILE *file){
     return false;
 }
 
-// spocitani mnozin a relaci v souboru
-int count_sets(char *line, FILE *file ) {
-
-    int sets_in_file = 0;
-
-    while (fgets( line, MAXLEN, file ) != NULL)
-    {
-        if ( line[0] == 'S' || line[0] == 'R') {
-            sets_in_file++;
-        }
-    }
-
-    return sets_in_file;
-}
-
 // nacteni universa do mnoziny
 int read_universum(universum_t *u, char *line_string){
 
@@ -213,6 +202,7 @@ int read_universum(universum_t *u, char *line_string){
         return 1;
     }
 
+    // alokuje misto pro kazdy prvek univerza a jeho specifickou velikost
     for (int i = 0; i < u->cardinality; i++)
     {
         *( u->items + i ) = malloc(sizeof(char) * u->size_of_elem_arr[i] );
@@ -222,9 +212,10 @@ int read_universum(universum_t *u, char *line_string){
         }
     }
 
+    // upraveni line_stringu do lepsi podoby pro dalsi praci (odstraneni mezer, zavorek...)
     strcpy( line_string,  truncate_line_string( line_string ) );
     for (int i = 0; line_string[i] != '\0'; i++) {
-        if ((line_string[i] < 'a' || line_string[i] > 'z') && 
+        if ((line_string[i] < 'a' || line_string[i] > 'z') &&       // prvky jsou pouze z pismen - osetreni
             (line_string[i] < 'A' || line_string[i] > 'Z')) {
             fprintf(stderr, "prvek v univerzu musi obsahovat pouze pismena anglicke abecedy\n");
             exit( 1 );
@@ -236,6 +227,7 @@ int read_universum(universum_t *u, char *line_string){
     return 0; 
 }
 
+// udela z universum_t => set_t 
 void universum_to_set(universum_t *u, set_t *set) {
     set->set = malloc(sizeof(int) * u->cardinality );
     if( set->set == NULL ){
@@ -260,6 +252,7 @@ void universum_to_set(universum_t *u, set_t *set) {
 int count_elems(char *line){
     int elem_count = 0;
 
+    //spocita pocet prvku na zaklade mezer, v pripade vice mezer za sebou jde o neplatny prvek
     for (int i = 1; line[i] != '\n' ; i++)
     {
         if( line[i] == ' ' ){
@@ -272,13 +265,13 @@ int count_elems(char *line){
     return elem_count;
 }
 
-// vytvoreni pole obsahujici velikost vsech prvku
+// vytvoreni pole obsahujici velikost vsech prvku v mnozine ci relaci
 int* size_of_elem_array(char *line_string, int elem_count){
     int char_count = 0;
     int *array = malloc(sizeof(int) * elem_count);
 
     int j = 0;
-    for (int i = 2; i < MAXLEN; i++) // puvodni podminka line_string[i] != EOF
+    for (int i = 2; i < MAXLEN; i++) 
     {
         if( line_string[i] == ' ' ){
             array[ j ] = char_count;
@@ -293,6 +286,7 @@ int* size_of_elem_array(char *line_string, int elem_count){
             char_count++;
         }
 
+        // osetreni maximalni velikosti prvku
         if (char_count > ITEMLEN) {
             fprintf(stderr, "presazena maximalni povolena delka prvku\n");
             exit( 1 );
@@ -364,6 +358,7 @@ void check_universum_elems(int cardinality, char **set, char commands[NUM_OF_COM
 set_t make_set(char *line_string, universum_t u){
     set_t set;
 
+    // zapsani jestli je na vstupu mnozina nebo relace
     if ((line_string[0] == 'S') || (line_string[0] == 'R')) {
         set.set_or_rel = line_string[0];
     } else if (line_string[0] == 'U') {
@@ -375,6 +370,7 @@ set_t make_set(char *line_string, universum_t u){
     int char_count = 0;
     set.size_of_elem_arr = malloc(sizeof(int) * set.cardinality  );
 
+    // vytvoreni pole obsahujici velikost kazdeho jednoho prvku v mnozine
     int j = 0;
     for (int i = 2; line_string[i] != EOF && j < set.cardinality ; i++)
     {
@@ -386,6 +382,7 @@ set_t make_set(char *line_string, universum_t u){
             char_count++;
     }
 
+    // osetreni jestli ma relace sudy pocet prvku a odecteni drive zapoctene zavorky do velikosti prvku
     if(line_string[0] == 'R'){
     for (int i = 0; i < set.cardinality; i++)
         {
@@ -397,11 +394,13 @@ set_t make_set(char *line_string, universum_t u){
             }
         }
     }
+    // upraveni line_stringu na lepsi format
     strcpy( line_string,  truncate_line_string( line_string ) );
     
 
     set.set = malloc(sizeof(int) * set.cardinality );
 
+    // pokud chcete vysvetleni napiste na sima.petula@seznam.cz a zamluvte ve skole na 2h mistnost s tabuli
     int streak = 0;
     int k = 0;
     j = 0;
@@ -411,6 +410,7 @@ set_t make_set(char *line_string, universum_t u){
         streak = 0;
         k = 0;
         
+        // osetreni neplatneho prvku v mnozine
         if(j == u.cardinality && j != 1){
             fprintf(stderr, "chybne zadani mnoziny ci relace\n");
             exit( 1 );
