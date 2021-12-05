@@ -47,6 +47,10 @@ void transitive(set_t set);
 void function(set_t set);
 void domain(set_t set, universum_t u);
 void codomain(set_t set, universum_t u);
+void injective (set_t rel, set_t set_A, set_t set_B);
+void empty(set_t * set);
+int card(set_t * set);
+void complement(set_t *set, set_t *u);
 
 int main(){
 
@@ -141,7 +145,7 @@ int main(){
     */
 
     // cteni a provadeni prikazu
-    while (read_line( line_string, file ) && line_string[0] == 'C') {
+    while (line_string[0] == 'C') {
 
         line_no++;
         if (line_no > (MAXLINES - 1)) {
@@ -150,6 +154,8 @@ int main(){
         }
 
         print_command_result(line_string, set, *universum, commands);
+        if( read_line( line_string, file ) == false)
+            break;
     }
     
     for (int i = 0; i < sets_in_file; i++)
@@ -381,12 +387,12 @@ set_t make_set(char *line_string, universum_t u){
     {
         streak = 0;
         k = 0;
-        /**
+        
         if(j == u.cardinality && j != 1){
             fprintf(stderr, "chybne zadani mnoziny ci relace\n");
             exit( 1 );
         }   
-        */
+        
         for (j = 0; j < u.cardinality; j++)
         {
             if(line_string[i] == u.items[j][k]){
@@ -491,6 +497,14 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         }
 
         // sem funkce
+        switch (cur_command_id) {
+            case 0:
+                empty( &set[ command_set_id_1 ] );
+                break;
+            case 2:
+                complement( &set[ command_set_id_1 ], &set[0]);
+                break;
+        }
 
     } else if (cur_command_id >= 3 && cur_command_id <= 8) {     // union - equals: 2 mnoziny na vstupu
         int command_set_id_2 = load_set_id(line_string, pos_after_command_ptr);
@@ -549,6 +563,11 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         }
 
         // sem funkce
+        switch (cur_command_id) {
+            case 16:
+                injective ( set[ command_set_id_1 ], set[ command_set_id_2 ], set[ command_set_id_3 ]);
+                break;
+        }
 
     }
 
@@ -637,7 +656,7 @@ void function(set_t set) {
 
     for (int i = 0; i < set.cardinality; i += 2) {
         for (int j = (i + 2); j < set.cardinality; j += 2) {
-            if ( set.set[i] == set.set[j] && set.set[i + 1] != set.set[j + 1] ) {
+            if ( set.set[i] == set.set[j] && set.set[i + 1] != set.set[j + 1] ) {     // aRb && aRc => neni funkce
                 is_function = false;
                 break;
             }
@@ -657,8 +676,6 @@ void function(set_t set) {
 
 // 14 - definicni obor relace
 void domain(set_t set, universum_t u) {
-
-    printf("XD");
 
     int cardinality = set.cardinality;
     int *copied_set = malloc(sizeof(int) * cardinality);
@@ -739,5 +756,113 @@ void codomain(set_t set, universum_t u) {
     printf("\n");
     
     free(copied_set);
+}
+
+// 16 - tiskne true nebo false, jestli je funkce injektivni
+void injective (set_t rel, set_t set_A, set_t set_B) {
+
+    // funkce nemuze byt injektivni, pokud mnozina vzoru je vetsi nez mnozina obrazu
+    // pocet prvnich prvku v relaci musi byt stejny jako pocet vzoru
+    if (set_A.cardinality > set_B.cardinality || (rel.cardinality / 2) != set_A.cardinality) {
+        printf("false\n");
+        return;
+    }
+
+    // zjisti, jestli mnozina prvnich prvku dvojic relace odpovida mnozine vzoru
+    int same_elems = 0;
+    for (int i = 0; i < rel.cardinality; i += 2) {
+        for (int j = 0; j < set_A.cardinality; j++) {
+            if (rel.set[i] == set_A.set[j]) {
+                same_elems++;
+            }
+        }
+
+        if (same_elems != 1) {     // kazdy prvek se musi vyskytovat prave jednou
+            printf("false\n");
+            return;
+        }
+        same_elems = 0;
+    }
+
+    // zjisti, jestli mnozina druhych prvku dvojic relace je podmnozinou mnoziny B
+    bool is_image = false;
+    for (int i = 1; i < rel.cardinality; i += 2) {
+        for (int j = 0; j < set_B.cardinality; j++) {
+            if (rel.set[i] == set_B.set[j]) {
+                is_image = true;
+            }
+        }
+
+        // pokud se prvek nenachazi v mnozine obrazu, tiskni false
+        if (!is_image) {
+            printf("false\n");
+            return;
+        }
+        is_image = false;
+    }
+
+    // zjisti, jestli se stejny obraz nevyskytuje v relaci vicekrat
+    same_elems = 1;
+    for (int i = 1; i < rel.cardinality; i += 2) {
+        for (int j = (i + 2); j < rel.cardinality; j += 2) {
+            if (rel.set[i] == rel.set[j]) {
+                same_elems++;
+            }
+        }
+
+        if (same_elems > 1) {
+            printf("false\n");
+            return;
+        }
+        same_elems = 1;
+    }
+
+    // pokud byly splneny vsechny podminky, tiskni true
+    printf("true\n");
+
+}
+
+// tiskne true nebo false, jestli je mnozina prazdna
+void empty(set_t * set){                                         
+    if (set->cardinality == 0)                                        // pokud pointer na nic neukazuje, tj vytvořený řetězec  
+        printf("true\n");                                       //je prázdný, tiskne true
+    else
+        printf("false\n");
+}
+
+// vraci pocet prvku v množině
+int card(set_t * set){                                          
+    int unik = set->cardinality;
+
+    for (int j = 0; j < set->cardinality; j++){
+        for (int i = (j+1); i < set->cardinality; i++){          // cyklus odečte počet opakování od počtu všech prvků
+            if(set->set[j] == set->set[i]){
+                unik--;
+                break;
+            }
+        }
+    }
+return unik;
+}
+
+ // tiskne doplněk množiny
+void complement(set_t *set, set_t *u){                     
+    bool contains = false;
+
+    for (int i = 0; i < u->cardinality; i++)
+    {
+        contains = false;
+        for (int j = 0; j < set->cardinality; j++)
+        {
+            if( u->set[i] == set->set[j] )
+                contains = true;
+        }
+
+        if( !contains )
+            printf("%d ", i);
+        
+    }
+    
+    printf("\n");
 }
 
