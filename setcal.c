@@ -38,6 +38,7 @@ void universum_to_set(universum_t *u, set_t *set);
 char* truncate_line_string(char *line_string);
 void fill_universum_items(universum_t *set, char *line_string);
 set_t make_set(char *line_string, universum_t u);
+void check_universum_elems(int cardinality, char **set, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
 void check_repeating_elems(char set_or_rel, int cardinality, int *set);
 void print_set(set_t set, universum_t u, int number_of_set);
 void print_command_result(char *line_string, set_t* set, universum_t u, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
@@ -113,6 +114,8 @@ int main(int argc, char *argv[]){
         return -1;
     }
 
+    check_universum_elems(universum->cardinality, universum->items, commands);
+
     // ulozi univerzum jako set a vytiskne ho
     sets_in_file++;
     universum_to_set(universum, set);
@@ -174,6 +177,10 @@ int main(int argc, char *argv[]){
 // nacte dalsi radek souboru
 bool read_line(char *line, FILE *file){
     if (fgets( line, MAXLEN, file) != NULL) {
+        if (line[0] != 'U' && line[0] != 'S' && line[0] != 'R' && line[0] != 'C') {
+            fprintf(stderr, "chybne zadane oznaceni mnoziny, relace ci prikazu\n");
+            exit( 1 );
+        }
         return true;
     }
     return false;
@@ -216,6 +223,14 @@ int read_universum(universum_t *u, char *line_string){
     }
 
     strcpy( line_string,  truncate_line_string( line_string ) );
+    for (int i = 0; line_string[i] != '\0'; i++) {
+        if ((line_string[i] < 'a' || line_string[i] > 'z') && 
+            (line_string[i] < 'A' || line_string[i] > 'Z')) {
+            fprintf(stderr, "prvek v univerzu musi obsahovat pouze pismena anglicke abecedy\n");
+            exit( 1 );
+        }
+    }
+
     fill_universum_items( u, line_string );
 
     return 0; 
@@ -276,7 +291,11 @@ int* size_of_elem_array(char *line_string, int elem_count){
             break;
         }else{
             char_count++;
-            
+        }
+
+        if (char_count > ITEMLEN) {
+            fprintf(stderr, "presazena maximalni povolena delka prvku\n");
+            exit( 1 );
         }
             
     }
@@ -303,7 +322,7 @@ char* truncate_line_string(char *line_string){
     return line_string_enhanced;
 }
 
-// naplneni universa hodnotami, kontrola jestli se kazdy prvek vyskytuje jednou
+// naplneni universa hodnotami
 void fill_universum_items(universum_t *set, char *line_string){
 
     int k = 0;
@@ -315,10 +334,26 @@ void fill_universum_items(universum_t *set, char *line_string){
         }      
     }
 
-    for (int i = 0; i < set->cardinality; i++) {
-        for (int j = (i + 1); j < set->cardinality; j++) {
-            if (strcmp(set->items[i], set->items[j]) == 0) {
+}
+
+// kontroluje, jestli jsou spravne zadane prvky v univerzu
+void check_universum_elems(int cardinality, char **set, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]) {
+
+    // kontrola jestli se kazdy prvek vyskytuje jednou
+    for (int i = 0; i < cardinality; i++) {
+        for (int j = (i + 1); j < cardinality; j++) {
+            if (strcmp(set[i], set[j]) == 0) {
                 fprintf(stderr, "univerzum obsahuje stejne prvky\n");
+                exit( 1 );
+            }
+        }
+    }
+
+    // kontrola jestli prvek neni stejny jako nektery z nazvu prikazu nebo klicova slova true a false
+    for (int i = 0; i < cardinality; i++) {
+        for (int j = 0; j < NUM_OF_COMMANDS; j++) {
+            if (strcmp(set[i], commands[j]) == 0 || strcmp(set[i], "true") == 0 || strcmp(set[i], "false") == 0) {
+                fprintf(stderr, "univerzum obsahuje zakazany prvek\n");
                 exit( 1 );
             }
         }
@@ -355,8 +390,9 @@ set_t make_set(char *line_string, universum_t u){
     for (int i = 0; i < set.cardinality; i++)
         {
             set.size_of_elem_arr[i] -= 1;
+            // osetreni uplnosti relace (ma sudy pocet prvku => kazdy prvek je ve dvojci)
             if( set.cardinality % 2  ){
-                fprintf(stderr, "neplatne zadana relace\n");  // osetreni uplnosti relace (ma sudy pocet prvku => kazdy prvek je ve dvojci)
+                fprintf(stderr, "neplatne zadana relace\n");
                 exit( 1 );
             }
         }
@@ -366,8 +402,6 @@ set_t make_set(char *line_string, universum_t u){
 
     set.set = malloc(sizeof(int) * set.cardinality );
 
-    // tohle odmitam vysvetlovat, protoze sam nevim, proc to funguje... snad jim to neshodi merlina
-    // "if it works, it works"
     int streak = 0;
     int k = 0;
     j = 0;
@@ -391,6 +425,8 @@ set_t make_set(char *line_string, universum_t u){
                 streak++;
             }
             else{
+                i = i - streak;
+                k = k - streak;
                 streak = 0;
             }
 
@@ -775,10 +811,10 @@ void subset_oper(set_t set1, set_t set2, universum_t u, char type) {
 // 9 - tiskne true nebo false, jestli je relace reflexivní
 void reflexive(set_t * set, universum_t u){                                     
     int reflex = 0;
-    for (int i = 0; i < set->cardinality; i += 2){                          // cyklus nachází reflexivní dvojicе
+    for (int i = 0; i < set->cardinality; i += 2){                // cyklus nachází reflexivní dvojicе
         if (set->set[i] == set->set[i + 1]) { 
             reflex++;
-            for (int j = (i+2); j < set->cardinality; j += 2){                  // cyklus nachází opakování reflexivních dvojic
+            for (int j = (i+2); j < set->cardinality; j += 2){            // cyklus nachází opakování reflexivních dvojic
                 if(set->set[j] == set->set[i] && set->set[j] == set->set[j+1])
                     reflex--;
             }
@@ -806,7 +842,7 @@ void symmetric(set_t * set){
             }   
         }  
     }
-    if (a == (b*2))                                                 // pokud je počet aRb stejný jako počet bRa, pak true
+    if (a == (b*2))                       // pokud je počet aRb stejný jako počet bRa, pak true
         printf("true\n");
     else
         printf("false\n");        
