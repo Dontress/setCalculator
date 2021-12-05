@@ -49,7 +49,11 @@ void domain(set_t set, universum_t u);
 void codomain(set_t set, universum_t u);
 void empty(set_t * set);
 int card(set_t * set);
-void complement(set_t *set, set_t *u);
+void complement(set_t *set, set_t *u, universum_t universum);
+void reflexive(set_t * set, universum_t universum);
+void symmetric(set_t * set);
+void antisymmetric(set_t * set);
+void print_set_int(int *set, universum_t u, int cardinality);
 
 int main(){
 
@@ -500,8 +504,11 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             case 0:
                 empty( &set[ command_set_id_1 ] );
                 break;
+            case 1:
+                printf("%d\n", card( &set[ command_set_id_1 ] ) );
+                break;
             case 2:
-                complement( &set[ command_set_id_1 ], &set[0]);
+                complement( &set[ command_set_id_1 ], &set[0], u);
                 break;
         }
 
@@ -532,6 +539,15 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         // sem funkce
         // priklad:
         switch (cur_command_id) {
+            case 9:
+                reflexive( &set[ command_set_id_1 ], u );
+                break;
+            case 10:
+                symmetric( &set[ command_set_id_1 ] );
+                break;
+            case 11:
+                antisymmetric( &set[ command_set_id_1 ] );
+                break;
             case 12:
                 transitive ( set[ command_set_id_1 ] );
                 break;
@@ -695,17 +711,7 @@ void domain(set_t set, universum_t u) {
     }
 
     // tiskni vysledek
-    printf("S ");
-    for (int i = 0; i < cardinality; i++) {
-        if (copied_set[i] == -1) {
-            continue;
-        }
-        for (int j = 0; j < u.size_of_elem_arr[ copied_set[i] ]; j++) {
-            printf("%c", u.items[ copied_set[i] ][ j ]);
-        }
-        printf(" ");
-    }
-    printf("\n");
+    print_set_int(copied_set, u, cardinality);
     
     free(copied_set);
 }
@@ -737,17 +743,7 @@ void codomain(set_t set, universum_t u) {
     }
 
     // tiskni vysledek
-    printf("S ");
-    for (int i = 0; i < cardinality; i++) {
-        if (copied_set[i] == -1) {
-            continue;
-        }
-        for (int j = 0; j < u.size_of_elem_arr[ copied_set[i] ]; j++) {
-            printf("%c", u.items[ copied_set[i] ][ j ]);
-        }
-        printf(" ");
-    }
-    printf("\n");
+    print_set_int(copied_set, u, cardinality);
     
     free(copied_set);
 }
@@ -776,22 +772,108 @@ return unik;
 }
 
  // tiskne doplněk množiny
-void complement(set_t *set, set_t *u){                     
+void complement(set_t *set, set_t *u, universum_t universum){                     
     bool contains = false;
-
+    int item_count = 0;
+    int j;
     for (int i = 0; i < u->cardinality; i++)
     {
         contains = false;
-        for (int j = 0; j < set->cardinality; j++)
+        for (j = 0; j < set->cardinality; j++)
         {
             if( u->set[i] == set->set[j] )
                 contains = true;
         }
 
-        if( !contains )
-            printf("%d ", i);
-        
+        if( !contains ){
+            item_count++;
+            for (int j = 0; j < u->size_of_elem_arr[i]; j++)
+            {
+                printf("%c", universum.items[i][j]);
+            }
+            printf(" ");
+        }  
+    }
+
+    if(item_count == 0){
+        printf("prazdna mnozina");
     }
     
     printf("\n");
 }
+
+// tiskne true nebo false, jestli je relace reflexivní
+void reflexive(set_t * set, universum_t u){                                     
+    int reflex = 0;
+    for (int i = 0; i < set->cardinality; i += 2){                          // cyklus nachází reflexivní dvojicе
+        if (set->set[i] == set->set[i + 1]) { 
+            reflex++;
+            for (int j = (i+2); j < set->cardinality; j += 2){                  // cyklus nachází opakování reflexivních dvojic
+                if(set->set[j] == set->set[i] && set->set[j] == set->set[j+1])
+                    reflex--;
+            }
+        }
+    }
+
+    if(reflex == u.cardinality)
+        printf("true\n");
+    else
+        printf("false\n");
+
+}
+
+// tiskne true nebo false, jestli je relace symetrická
+void symmetric(set_t * set){                                        
+    int a = 0, b = 0;
+    for (int i = 0; i < set->cardinality; i += 2){                  // cyklus nachází aRb
+        if (set->set[i] != set->set[i + 1]){
+            a++;
+            for (int j = set->cardinality; j > (i+1); j -= 2){      // cyklus nachází bRa
+                if(set->set[j] == set->set[i+1]){
+                    if(set->set[j+1] == set->set[i])
+                        b++;
+                }
+            }   
+        }  
+    }
+    if (a == (b*2))                                                 // pokud je počet aRb stejný jako počet bRa, pak true
+        printf("true\n");
+    else
+        printf("false\n");        
+}
+
+// tiskne true nebo false, jestli je relace antisymetrická
+void antisymmetric(set_t * set){                                    
+    int a = 0, b = 0;
+
+    for (int i = 0; i < set->cardinality; i += 2){
+        for (int j = 0; j < set->cardinality; j+=2){              // cyklus nachází aRb && bRa
+            if(set->set[j] == set->set[i+1] && set->set[j+1] == set->set[i]){
+                a++;
+                if(set->set[i] == set->set[i+1])
+                    b++;
+            }
+        } 
+    }
+
+    if (a == b)                                           // ověří, zda aRb && bRa, pak a = b
+        printf("true\n");
+    else
+        printf("false\n");
+}
+
+void print_set_int(int *set, universum_t u, int cardinality){
+
+    printf("S ");
+    for (int i = 0; i < cardinality; i++) {
+        if (set[i] == -1) {
+            continue;
+        }
+        for (int j = 0; j < u.size_of_elem_arr[ set[i] ]; j++) {
+            printf("%c", u.items[ set[i] ][ j ]);
+        }
+        printf(" ");
+    }
+    printf("\n");
+}
+
