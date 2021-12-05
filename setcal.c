@@ -37,28 +37,33 @@ int read_universum(universum_t *u, char *line_string);
 void universum_to_set(universum_t *u, set_t *set);
 char* truncate_line_string(char *line_string);
 void fill_universum_items(universum_t *set, char *line_string);
-void print_universum(universum_t universum);
 set_t make_set(char *line_string, universum_t u);
+void check_repeating_elems(char set_or_rel, int cardinality, int *set);
 void print_set(set_t set, universum_t u, int number_of_set);
 void print_command_result(char *line_string, set_t* set, universum_t u, char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN]);
 int load_set_id(char *line_string, int *pos_after_command);
-void copy_set(int *set_1, int *set_2, int n);
+void empty(set_t * set);
+int card(set_t * set);
+void complement(set_t *set, set_t *u, universum_t universum);
+void set_oper(set_t set1, set_t set2, universum_t u, char type);
+void subset_oper(set_t set1, set_t set2, universum_t u, char type);
+void reflexive(set_t * set, universum_t universum);
+void symmetric(set_t * set);
+void antisymmetric(set_t * set);
 void transitive(set_t set);
 void function(set_t set);
 void domain(set_t set, universum_t u);
 void codomain(set_t set, universum_t u);
-void empty(set_t * set);
-int card(set_t * set);
-void complement(set_t *set, set_t *u, universum_t universum);
-void reflexive(set_t * set, universum_t universum);
-void symmetric(set_t * set);
-void antisymmetric(set_t * set);
+bool injective (set_t rel, set_t set_A, set_t set_B);
+bool surjective (set_t rel, set_t set_A, set_t set_B);
+bool check_first_elems(int cardinality, int *first_elems, int *set_A);
+bool check_images(int rel_cardinality, int img_cardinality, int *first_elems, int *set_B);
+void copy_set(int *set_1, int *set_2, int n);
 void print_set_int(int *set, universum_t u, int cardinality);
-void set_oper(set_t set1, set_t set2, universum_t u, char type);
-void subset_oper(set_t set1, set_t set2, universum_t u, char type);
+
 
 int main(int argc, char *argv[]){
-
+    /**
     if(argc < 2) {
         fprintf(stderr, "chybi argument s nazvem souboru");
         return -1;
@@ -68,7 +73,7 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "neplatny pocet argumentu");
         return -1;
     }
-
+    */
     char line_string[MAXLEN] = "";
     char commands[NUM_OF_COMMANDS][COMMAND_MAXLEN] = {
         "empty", "card", "complement", "union", "intersect",
@@ -85,17 +90,16 @@ int main(int argc, char *argv[]){
         return -1;
     }
 
-    char file_name[] = "file.txt";
-    FILE* file;
-    file = fopen( argv[argc-1], "r" );
-    if(file == NULL){
-        fprintf(stderr, "cannot open file");
-        return -1;
-    }
-
     set_t *set = malloc(sizeof(set_t));
     if( set == NULL ){
         fprintf(stderr, "chyba alokace setu");
+        return -1;
+    }
+
+    FILE* file;
+    file = fopen( /**argv[argc-1]*/"file.txt", "r" );
+    if(file == NULL){
+        fprintf(stderr, "cannot open file");
         return -1;
     }
 
@@ -110,14 +114,9 @@ int main(int argc, char *argv[]){
     }
 
     // ulozi univerzum jako set a vytiskne ho
-    
     sets_in_file++;
     universum_to_set(universum, set);
-    //set[line_no] = make_set(line_string, *universum);
     print_set(set[line_no], *universum, line_no);
-    //printf("universum: ");
-    //print_universum( *universum );
-    //printf("\n");
 
     // cte, uklada a tiskne mnoziny a relace ze souboru
     while (read_line( line_string, file ) && (line_string[0] == 'S' || line_string[0] == 'R')) {
@@ -137,15 +136,6 @@ int main(int argc, char *argv[]){
         set[line_no] = make_set(line_string, *universum);
         print_set(set[line_no], *universum, line_no);
     }
-
-    /**
-    for (int i = 0; i < sets_in_file + 1; i++)
-    {
-        read_line( line_string, file );
-        set[i] = make_set(line_string, *universum);
-        print_set(set[i], *universum, i);
-    }
-    */
 
     // cteni a provadeni prikazu
     while (line_string[0] == 'C') {
@@ -171,14 +161,14 @@ int main(int argc, char *argv[]){
     {
         free(universum->items[i]);
     }
+
     free(universum->items);
     free(universum->size_of_elem_arr);
     free(universum);
     free(set);
-    
 
-fclose(file);  
-return 0;    
+    fclose(file);  
+    return 0;    
 }
 
 // nacte dalsi radek souboru
@@ -228,7 +218,7 @@ int read_universum(universum_t *u, char *line_string){
     strcpy( line_string,  truncate_line_string( line_string ) );
     fill_universum_items( u, line_string );
 
-return 0; 
+    return 0; 
 }
 
 void universum_to_set(universum_t *u, set_t *set) {
@@ -264,7 +254,7 @@ int count_elems(char *line){
             
     }
 
-return elem_count;
+    return elem_count;
 }
 
 // vytvoreni pole obsahujici velikost vsech prvku
@@ -291,8 +281,7 @@ int* size_of_elem_array(char *line_string, int elem_count){
             
     }
 
-
-return array;
+    return array;
 }
 
 // upraveni vstupniho retezce na osekany format pro zapis
@@ -311,10 +300,10 @@ char* truncate_line_string(char *line_string){
     }
     line_string_enhanced[j] = '\0';
 
-return line_string_enhanced;
+    return line_string_enhanced;
 }
 
-// naplneni universa hodnotami
+// naplneni universa hodnotami, kontrola jestli se kazdy prvek vyskytuje jednou
 void fill_universum_items(universum_t *set, char *line_string){
 
     int k = 0;
@@ -325,17 +314,14 @@ void fill_universum_items(universum_t *set, char *line_string){
             set->items[i][j] = line_string[k];
         }      
     }
-}
 
-// vypise prvky universa
-void print_universum(universum_t universum){
-    for (int i = 0; i < universum.cardinality; i++)
-    {
-        for (int j = 0; j < universum.size_of_elem_arr[i]; j++)
-        {
-            printf("%c", universum.items[i][j]);
+    for (int i = 0; i < set->cardinality; i++) {
+        for (int j = (i + 1); j < set->cardinality; j++) {
+            if (strcmp(set->items[i], set->items[j]) == 0) {
+                fprintf(stderr, "univerzum obsahuje stejne prvky\n");
+                exit( 1 );
+            }
         }
-        printf(" ");
     }
 }
 
@@ -422,12 +408,37 @@ set_t make_set(char *line_string, universum_t u){
         }
     }
  
-return set;
+    check_repeating_elems(set.set_or_rel, set.cardinality, set.set);
+
+    return set;
+}
+
+// osetri, aby mnoziny nemely stejne prvky nebo relace stejne dvojice
+void check_repeating_elems(char set_or_rel, int cardinality, int *set) {
+    if (set_or_rel == 'S') {
+        for (int i = 0; i < cardinality; i++) {
+            for ( int j = (i + 1); j < cardinality; j++) {
+                if (set[i] == set[j]) {
+                    fprintf(stderr, "mnozina obsahuje stejne prvky\n");
+                    exit( 1 );
+                }
+            }
+        }
+    } else if (set_or_rel == 'R') {
+        for (int i = 0; i < cardinality; i += 2) {
+            for ( int j = (i + 2); j < cardinality; j += 2) {
+                if (set[i] == set[j] && set[i + 1] == set[j + 1]) {
+                    fprintf(stderr, "relace obsahuje stejne dvojice\n");
+                    exit( 1 );
+                }
+            }
+        }
+    }
 }
 
 // vypise mnozinu ci relaci
 void print_set(set_t set, universum_t u, int number_of_set){
-    printf("set %d is: \n", number_of_set);
+
     if (number_of_set == 0) {
         printf("U ");
     } else {
@@ -491,7 +502,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
     // a over, jestli se skutecne jedna o mnozinu ci relaci
     if (cur_command_id >= 0 && cur_command_id <= 2) {     // empty - complement: 1 mnozina na vstupu
         if (line_string[ pos_after_command ] != '\n') {
-            fprintf(stderr, "chybne zadany prikaz\n");
+            fprintf(stderr, "chybne zadany prikaz (chybi znak konce radku)\n");
             exit( 1 );
         }
         if (set[ command_set_id_1 ].set_or_rel != 'S') {
@@ -499,7 +510,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             exit( 1 );
         }
 
-        // sem funkce
+        // podle zadaneho prikazu zavolej prislusnou funkci
         switch (cur_command_id) {
             case 0:
                 empty( &set[ command_set_id_1 ] );
@@ -516,7 +527,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         int command_set_id_2 = load_set_id(line_string, pos_after_command_ptr);
 
         if (line_string[ pos_after_command ] != '\n') {
-            fprintf(stderr, "chybne zadany prikaz\n");
+            fprintf(stderr, "chybne zadany prikaz (chybi znak konce radku)\n");
             exit( 1 );
         }
         if (set[ command_set_id_1 ].set_or_rel != 'S' || set[ command_set_id_2 ].set_or_rel != 'S') {
@@ -524,6 +535,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             exit( 1 );
         }
 
+        // podle zadaneho prikazu zavolej prislusnou funkci
         switch (cur_command_id) {
             case 3:
                 set_oper( set[ command_set_id_1 ], set[ command_set_id_2 ], u, 'u' );
@@ -547,7 +559,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
 
     } else if (cur_command_id >= 9 && cur_command_id <= 15) {    // reflexive - codomain: 1 relace na vstupu
         if (line_string[ pos_after_command ] != '\n') {
-            fprintf(stderr, "chybne zadany prikaz\n");
+            fprintf(stderr, "chybne zadany prikaz (chybi znak konce radku)\n");
             exit( 1 );
         }
         if (set[ command_set_id_1 ].set_or_rel != 'R') {
@@ -555,8 +567,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             exit( 1 );
         }
 
-        // sem funkce
-        // priklad:
+        // podle zadaneho prikazu zavolej prislusnou funkci
         switch (cur_command_id) {
             case 9:
                 reflexive( &set[ command_set_id_1 ], u );
@@ -586,7 +597,7 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
         int command_set_id_3 = load_set_id(line_string, pos_after_command_ptr);
 
         if (line_string[ pos_after_command ] != '\n') {
-            fprintf(stderr, "chybne zadany prikaz\n");
+            fprintf(stderr, "chybne zadany prikaz (chybi znak konce radku)\n");
             exit( 1 );
         }
         if (set[ command_set_id_1 ].set_or_rel != 'R' ||
@@ -596,7 +607,32 @@ void print_command_result(char *line_string, set_t* set, universum_t u, char com
             exit( 1 );
         }
 
-        // sem funkce
+        // podle zadaneho prikazu zavolej prislusnou funkci
+        switch (cur_command_id) {
+            case 16:
+                if (injective ( set[ command_set_id_1 ], set[ command_set_id_2 ], set[ command_set_id_3 ] )) {
+                    printf("true\n");
+                } else {
+                    printf("false\n");
+                }
+                break;
+            case 17:
+                if (surjective ( set[ command_set_id_1 ], set[ command_set_id_2 ], set[ command_set_id_3 ] )) {
+                    printf("true\n");
+                } else {
+                    printf("false\n");
+                }
+                break;
+            case 18:
+                if (injective ( set[ command_set_id_1 ], set[ command_set_id_2 ], set[ command_set_id_3 ] ) &&
+                    surjective ( set[ command_set_id_1 ], set[ command_set_id_2 ], set[ command_set_id_3 ] )) 
+                {
+                    printf("true\n");
+                } 
+                else {
+                    printf("false\n");
+                }
+        }
 
     }
 
@@ -617,7 +653,7 @@ int load_set_id(char *line_string, int *pos_after_command) {
     for (int i = 0; i < SET_ID_MAXLEN; i++) {
         if ( line_string[ position ] >= '0' && line_string[ position ] <= '9' ) {
             command_set[i] = line_string[ position ];
-        } else if ( line_string[ position ] == ' ' || line_string[ position ] == '\n' ) {
+        } else if ( line_string[ position ] == ' ' || line_string[ position ] == '\n' || line_string[ position ] == '\0') {
             command_set_id = atoi(command_set);
             break;
         } else {
@@ -636,11 +672,164 @@ int load_set_id(char *line_string, int *pos_after_command) {
     return (command_set_id - 1); // odecitame 1, protoze v argumentech se indexuje od 1
 }
 
-// zkopiruje pole integeru
-void copy_set(int *set_1, int *set_2, int n) {
-    for (int i = 0; i < n; i++) {
-        set_1[i] = set_2[i];
+// 0 - tiskne true nebo false, jestli je mnozina prazdna
+void empty(set_t * set){                                         
+    if (set->cardinality == 0)                 // pokud pointer na nic neukazuje, tj vytvořený řetězec  
+        printf("true\n");                 //je prázdný, tiskne true
+    else
+        printf("false\n");
+}
+
+// 1 - pocet prvku v množině
+int card(set_t * set){                                          
+    int unik = set->cardinality;
+
+    for (int j = 0; j < set->cardinality; j++){
+        for (int i = (j+1); i < set->cardinality; i++){          // cyklus odečte počet opakování od počtu všech prvků
+            if(set->set[j] == set->set[i]){
+                unik--;
+                break;
+            }
+        }
     }
+return unik;
+}
+
+ // 2 - doplněk množiny
+void complement(set_t *set, set_t *u, universum_t universum){                     
+    bool contains = false;
+    int item_count = 0;
+    int j;
+    for (int i = 0; i < u->cardinality; i++)
+    {
+        contains = false;
+        for (j = 0; j < set->cardinality; j++)
+        {
+            if( u->set[i] == set->set[j] )
+                contains = true;
+        }
+
+        if( !contains ){
+            item_count++;
+            for (int j = 0; j < u->size_of_elem_arr[i]; j++)
+            {
+                printf("%c", universum.items[i][j]);
+            }
+            printf(" ");
+        }  
+    }
+
+    if(item_count == 0){
+        printf("prazdna mnozina");
+    }
+    
+    printf("\n");
+}
+
+// 3, 4, 5 - sjednoceni, prunik, rozdil mnozin
+void set_oper(set_t set1, set_t set2, universum_t u, char type) {
+
+    printf("S");
+
+    for (int i = 0; i < u.cardinality; i++)
+    {
+        bool found_set1 = false;
+        bool found_set2 = false;
+        for (int j = 0; j < set1.cardinality; j++)
+        if (i == set1.set[j]) found_set1 = true;
+        for (int j = 0; j < set2.cardinality; j++)
+        if (i == set2.set[j]) found_set2 = true;
+        if (type == 'u' && (found_set1 || found_set2)) printf(" %s", u.items[i]);
+        else if (type == 'i' && (found_set1 && found_set2)) printf(" %s", u.items[i]);
+        else if (type == 'm' && (found_set1 && !found_set2)) printf(" %s", u.items[i]);
+    }
+
+    printf("\n");
+
+}
+
+// 6, 7, 8 - podmnozina, vlastni podmnozina, rovnost
+void subset_oper(set_t set1, set_t set2, universum_t u, char type) {
+
+    bool p = true;
+    bool r = true;
+
+    for (int i = 0; i < u.cardinality; i++)
+    {
+        bool found_set1 = false;
+        bool found_set2 = false;
+        for (int j = 0; j < set1.cardinality; j++)
+        if (i == set1.set[j]) found_set1 = true;
+        for (int j = 0; j < set2.cardinality; j++)
+        if (i == set2.set[j]) found_set2 = true;
+        if (found_set1 && !found_set2) p = false;
+        if ((found_set1 && !found_set2) || (!found_set1 && found_set2)) r = false;
+    }
+
+    type == 'p' ? p ? printf("true\n") : printf("false\n") :
+    type == 'r' ? r ? printf("true\n") : printf("false\n") :
+            p && !r ? printf("true\n") : printf("false\n") ;
+
+}
+
+// 9 - tiskne true nebo false, jestli je relace reflexivní
+void reflexive(set_t * set, universum_t u){                                     
+    int reflex = 0;
+    for (int i = 0; i < set->cardinality; i += 2){                          // cyklus nachází reflexivní dvojicе
+        if (set->set[i] == set->set[i + 1]) { 
+            reflex++;
+            for (int j = (i+2); j < set->cardinality; j += 2){                  // cyklus nachází opakování reflexivních dvojic
+                if(set->set[j] == set->set[i] && set->set[j] == set->set[j+1])
+                    reflex--;
+            }
+        }
+    }
+
+    if(reflex == u.cardinality)
+        printf("true\n");
+    else
+        printf("false\n");
+
+}
+
+// 10 - tiskne true nebo false, jestli je relace symetrická
+void symmetric(set_t * set){                                        
+    int a = 0, b = 0;
+    for (int i = 0; i < set->cardinality; i += 2){                  // cyklus nachází aRb
+        if (set->set[i] != set->set[i + 1]){
+            a++;
+            for (int j = set->cardinality; j > (i+1); j -= 2){      // cyklus nachází bRa
+                if(set->set[j] == set->set[i+1]){
+                    if(set->set[j+1] == set->set[i])
+                        b++;
+                }
+            }   
+        }  
+    }
+    if (a == (b*2))                                                 // pokud je počet aRb stejný jako počet bRa, pak true
+        printf("true\n");
+    else
+        printf("false\n");        
+}
+
+// 11 - tiskne true nebo false, jestli je relace antisymetrická
+void antisymmetric(set_t * set){                                    
+    int a = 0, b = 0;
+
+    for (int i = 0; i < set->cardinality; i += 2){
+        for (int j = 0; j < set->cardinality; j+=2){              // cyklus nachází aRb && bRa
+            if(set->set[j] == set->set[i+1] && set->set[j+1] == set->set[i]){
+                a++;
+                if(set->set[i] == set->set[i+1])
+                    b++;
+            }
+        } 
+    }
+
+    if (a == b)                                           // ověří, zda aRb && bRa, pak a = b
+        printf("true\n");
+    else
+        printf("false\n");
 }
 
 // 12 - tranzitivita relace
@@ -767,120 +956,131 @@ void codomain(set_t set, universum_t u) {
     free(copied_set);
 }
 
-// tiskne true nebo false, jestli je mnozina prazdna
-void empty(set_t * set){                                         
-    if (set->cardinality == 0)                                        // pokud pointer na nic neukazuje, tj vytvořený řetězec  
-        printf("true\n");                                       //je prázdný, tiskne true
-    else
-        printf("false\n");
+// 16 - zjisti, jestli je funkce injektivni
+bool injective (set_t rel, set_t set_A, set_t set_B) {
+
+    // funkce nemuze byt injektivni, pokud mnozina vzoru je vetsi nez mnozina obrazu
+    // pocet prvnich prvku v relaci musi byt stejny jako pocet vzoru
+    if (set_A.cardinality > set_B.cardinality || (rel.cardinality / 2) != set_A.cardinality) {
+        return false;
+    }
+
+    // zjisti, jestli mnozina prvnich prvku dvojic relace odpovida mnozine vzoru
+    if (!check_first_elems(set_A.cardinality, rel.set, set_A.set)) {
+        return false;
+    }
+
+    // zjisti, jestli mnozina druhych prvku dvojic relace je podmnozinou mnoziny obrazu
+    if (!check_images(rel.cardinality, set_B.cardinality, rel.set, set_B.set)) {
+        return false;
+    }
+
+    // zjisti, jestli se stejny obraz nevyskytuje v relaci vicekrat
+    int same_elems = 1;
+    for (int i = 1; i < rel.cardinality; i += 2) {
+        for (int j = (i + 2); j < rel.cardinality; j += 2) {
+            if (rel.set[i] == rel.set[j]) {
+                same_elems++;
+            }
+        }
+
+        if (same_elems > 1) {
+            return false;
+        }
+        same_elems = 1;
+    }
+
+    // pokud byly splneny vsechny podminky, tiskni true
+    return true;
+
 }
 
-// vraci pocet prvku v množině
-int card(set_t * set){                                          
-    int unik = set->cardinality;
+// 17 - zjisti, jestli je funkce surjektivni
+bool surjective (set_t rel, set_t set_A, set_t set_B) {
 
-    for (int j = 0; j < set->cardinality; j++){
-        for (int i = (j+1); i < set->cardinality; i++){          // cyklus odečte počet opakování od počtu všech prvků
-            if(set->set[j] == set->set[i]){
-                unik--;
+    // funkce nemuze byt surjektivni, pokud mnozina vzoru je mensi nez mnozina obrazu
+    // pocet prvnich prvku v relaci musi byt stejny jako pocet vzoru
+    if (set_A.cardinality < set_B.cardinality || (rel.cardinality / 2) != set_A.cardinality) {
+        return false;
+    }
+
+    // zjisti, jestli mnozina prvnich prvku dvojic relace odpovida mnozine vzoru
+    if (!check_first_elems(set_A.cardinality, rel.set, set_A.set)) {
+        return false;
+    }
+
+    // zjisti, jestli mnozina druhych prvku dvojic relace je podmnozinou mnoziny obrazu
+    if (!check_images(rel.cardinality, set_B.cardinality, rel.set, set_B.set)) {
+        return false;
+    }
+
+    // zjisti, jestli se kazdy obraz vyskytuje alespon jednou
+    bool is_in_rel = false;
+    for (int i = 0; i < set_B.cardinality; i++) {
+        for (int j = 1; j < rel.cardinality; j += 2) {
+            if (set_B.set[i] == rel.set[j]) {
+                is_in_rel = true;
                 break;
             }
         }
+
+        if (!is_in_rel) {
+            return false;
+        }
+        is_in_rel = false;
     }
-return unik;
+
+    // pokud byly splneny vsechny podminky, tiskni true
+    return true;
 }
 
- // tiskne doplněk množiny
-void complement(set_t *set, set_t *u, universum_t universum){                     
-    bool contains = false;
-    int item_count = 0;
-    int j;
-    for (int i = 0; i < u->cardinality; i++)
-    {
-        contains = false;
-        for (j = 0; j < set->cardinality; j++)
-        {
-            if( u->set[i] == set->set[j] )
-                contains = true;
+// zkontroluje, jestli mnozina prvnich prvku dvojic relace odpovida mnozine vzoru
+bool check_first_elems(int cardinality, int *first_elems, int *set_A) {
+    int same_elems = 0;
+    for (int i = 0; i < cardinality*2; i += 2) {
+        for (int j = 0; j < cardinality; j++) {
+            if (first_elems[i] == set_A[j]) {
+                same_elems++;
+            }
         }
 
-        if( !contains ){
-            item_count++;
-            for (int j = 0; j < u->size_of_elem_arr[i]; j++)
-            {
-                printf("%c", universum.items[i][j]);
-            }
-            printf(" ");
-        }  
+        if (same_elems != 1) {     // kazdy prvek se musi vyskytovat prave jednou
+            return false;
+        }
+        same_elems = 0;
     }
 
-    if(item_count == 0){
-        printf("prazdna mnozina");
-    }
-    
-    printf("\n");
+    return true;
 }
 
-// tiskne true nebo false, jestli je relace reflexivní
-void reflexive(set_t * set, universum_t u){                                     
-    int reflex = 0;
-    for (int i = 0; i < set->cardinality; i += 2){                          // cyklus nachází reflexivní dvojicе
-        if (set->set[i] == set->set[i + 1]) { 
-            reflex++;
-            for (int j = (i+2); j < set->cardinality; j += 2){                  // cyklus nachází opakování reflexivních dvojic
-                if(set->set[j] == set->set[i] && set->set[j] == set->set[j+1])
-                    reflex--;
+// zkontroluje, jestli mnozina druhych prvku dvojic relace je podmnozinou mnoziny obrazu
+bool check_images(int rel_cardinality, int img_cardinality, int *first_elems, int *set_B) {
+    bool is_image = false;
+    for (int i = 1; i < rel_cardinality; i += 2) {
+        for (int j = 0; j < img_cardinality; j++) {
+            if (first_elems[i] == set_B[j]) {
+                is_image = true;
             }
         }
+
+        // pokud se prvek nenachazi v mnozine obrazu, tiskni false
+        if (!is_image) {
+            return false;
+        }
+        is_image = false;
     }
 
-    if(reflex == u.cardinality)
-        printf("true\n");
-    else
-        printf("false\n");
-
+    return true;
 }
 
-// tiskne true nebo false, jestli je relace symetrická
-void symmetric(set_t * set){                                        
-    int a = 0, b = 0;
-    for (int i = 0; i < set->cardinality; i += 2){                  // cyklus nachází aRb
-        if (set->set[i] != set->set[i + 1]){
-            a++;
-            for (int j = set->cardinality; j > (i+1); j -= 2){      // cyklus nachází bRa
-                if(set->set[j] == set->set[i+1]){
-                    if(set->set[j+1] == set->set[i])
-                        b++;
-                }
-            }   
-        }  
+// zkopiruje pole integeru
+void copy_set(int *set_1, int *set_2, int n) {
+    for (int i = 0; i < n; i++) {
+        set_1[i] = set_2[i];
     }
-    if (a == (b*2))                                                 // pokud je počet aRb stejný jako počet bRa, pak true
-        printf("true\n");
-    else
-        printf("false\n");        
 }
 
-// tiskne true nebo false, jestli je relace antisymetrická
-void antisymmetric(set_t * set){                                    
-    int a = 0, b = 0;
-
-    for (int i = 0; i < set->cardinality; i += 2){
-        for (int j = 0; j < set->cardinality; j+=2){              // cyklus nachází aRb && bRa
-            if(set->set[j] == set->set[i+1] && set->set[j+1] == set->set[i]){
-                a++;
-                if(set->set[i] == set->set[i+1])
-                    b++;
-            }
-        } 
-    }
-
-    if (a == b)                                           // ověří, zda aRb && bRa, pak a = b
-        printf("true\n");
-    else
-        printf("false\n");
-}
-
+// tiskne vysledek prikazu jako mnozinu
 void print_set_int(int *set, universum_t u, int cardinality){
 
     printf("S ");
@@ -895,49 +1095,3 @@ void print_set_int(int *set, universum_t u, int cardinality){
     }
     printf("\n");
 }
-
-void set_oper(set_t set1, set_t set2, universum_t u, char type) {
-
-    printf("S");
-
-    for (int i = 0; i < u.cardinality; i++)
-    {
-        bool found_set1 = false;
-        bool found_set2 = false;
-        for (int j = 0; j < set1.cardinality; j++)
-        if (i == set1.set[j]) found_set1 = true;
-        for (int j = 0; j < set2.cardinality; j++)
-        if (i == set2.set[j]) found_set2 = true;
-        if (type == 'u' && (found_set1 || found_set2)) printf(" %s", u.items[i]);
-        else if (type == 'i' && (found_set1 && found_set2)) printf(" %s", u.items[i]);
-        else if (type == 'm' && (found_set1 && !found_set2)) printf(" %s", u.items[i]);
-    }
-
-    printf("\n");
-
-}
-
-// 6, 7, 8 - podmnozina, vlastni podmnozina, rovnost
-void subset_oper(set_t set1, set_t set2, universum_t u, char type) {
-
-    bool p = true;
-    bool r = true;
-
-    for (int i = 0; i < u.cardinality; i++)
-    {
-        bool found_set1 = false;
-        bool found_set2 = false;
-        for (int j = 0; j < set1.cardinality; j++)
-        if (i == set1.set[j]) found_set1 = true;
-        for (int j = 0; j < set2.cardinality; j++)
-        if (i == set2.set[j]) found_set2 = true;
-        if (found_set1 && !found_set2) p = false;
-        if ((found_set1 && !found_set2) || (!found_set1 && found_set2)) r = false;
-    }
-
-    type == 'p' ? p ? printf("true\n") : printf("false\n") :
-    type == 'r' ? r ? printf("true\n") : printf("false\n") :
-            p && !r ? printf("true\n") : printf("false\n") ;
-
-}
-
