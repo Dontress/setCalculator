@@ -865,4 +865,3 @@ void complement(set_t *set, set_t *u){
     
     printf("\n");
 }
-
